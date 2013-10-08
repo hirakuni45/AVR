@@ -6,7 +6,8 @@ TARGET		=	gaiger
 CSOURCES	=
 PSOURCES	=	mainloop.cpp \
 				monograph.cpp \
-				lcdio.cpp
+				lcdio.cpp \
+				psound.cpp
 
 ASOURCES	=
 
@@ -144,6 +145,7 @@ tarball:
 
 # DO NOT DELETE
 
-mainloop.o: mainloop.hpp monograph.hpp lcdio.hpp
+mainloop.o: mainloop.hpp monograph.hpp lcdio.hpp psound.hpp
 monograph.o: monograph.hpp font6x12.h
 lcdio.o: lcdio.hpp
+psound.o: psound.hpp

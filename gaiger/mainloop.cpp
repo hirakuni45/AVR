@@ -23,14 +23,14 @@
 #include "mainloop.hpp"
 #include "monograph.hpp"
 #include "lcdio.hpp"
-
-static volatile unsigned char timer_count_;
-static volatile unsigned char draw_count_;
+#include "psound.hpp"
 
 static void (*main_task_)() = 0;
 static bool fb_clear_ = false;
 
+static system::timer timer_;
 static graphics::monograph monog_;
+static device::psound psound_;
 
 //-----------------------------------------------------------------//
 /*!
@@ -39,24 +39,7 @@ static graphics::monograph monog_;
 //-----------------------------------------------------------------//
 ISR(TIMER2_COMPA_vect)
 {
-	// draw_count_ <- 120 / 4 (30Hz)
-	if((timer_count_ & 3) == 0) ++draw_count_;
-	++timer_count_;
-}
-
-
-//-----------------------------------------------------------------//
-/*!
-	@breif	描画の同期
-*/
-//-----------------------------------------------------------------//
-void sync_draw(void)
-{
-	volatile unsigned char cnt;
-
-	cnt = draw_count_;
-	while(draw_count_ == cnt) ;
-
+	timer_.service();
 }
 
 
@@ -65,7 +48,7 @@ void sync_draw(void)
 	@breif	ATMEGA328P I/O などの初期化プロセス
 */
 //-----------------------------------------------------------------//
-static void system_initialize(void)
+static void system_initialize()
 {
 //	analog compalator status register
 //	ACSR = 0b01000100;
@@ -115,33 +98,33 @@ int main(void)
 	// システム初期化
 	system_initialize();
 
-	lcdio::init();
+	device::lcdio::init();
 
 	monog_.init();
 	monog_.clear(0x00);
 //	monog_.line(0, 0, 127, 63, 1);
 //	monog_.line(127, 0, 0, 63, 1);
-	lcdio::copy(monog_.fb());
+	device::lcdio::copy(monog_.fb());
 
-///	psound_init();
+	psound_.init();
 
 	// 割り込み許可〜
 	sei();
 
 	fb_clear_ = true;
 
-///	psound_request(20, 10);
+	psound_.request(20, 10);
 
 	while(1) {
-		sync_draw();
+		timer_.sync_draw();
 
-		lcdio::copy(monog_.fb());
+		device::lcdio::copy(monog_.fb());
 
 		if(fb_clear_) monog_.clear(0x00);
 
 ///		if(main_task_ != 0) (*main_task_)();
 
-///		psound_service();
+		psound_.service();
 	}
 }
 

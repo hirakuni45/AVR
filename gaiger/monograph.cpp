@@ -14,12 +14,11 @@
 #endif
 
 // 標準的 ASCII フォント
-static const uint8_t font6x12[] PROGMEM = {
+static const uint8_t font6x12_[] PROGMEM = {
 #include "font6x12.h"
 };
-#define FONT_WIDTH	6
-#define FONT_HEIGHT	12
-
+static const int FONT_WIDTH	 = 6;
+static const int FONT_HEIGHT = 12;
 
 #if 0
 // プロポーショナル・フォントのテーブル
@@ -40,70 +39,70 @@ namespace graphics {
 // sjis コードをリニア表に変換する。
 // 上位バイト： 0x81 to 0x9f, 0xe0 to 0xef
 // 下位バイト： 0x40 to 0x7e, 0x80 to 0xfc
-static unsigned short sjis_to_liner(unsigned char up, unsigned char lo)
-{
-	unsigned short code;
-	if(0x81 <= up && up <= 0x9f) {
-		code = up - 0x81;
-	} else if(0xe0 <= up && up <= 0xef) {
-		code = (0x9f + 1 - 0x81) + up - 0xe0;
-	} else {
-		return 6;	// 無効コードの代表値
-	}
-	int loa = (0x7e + 1 - 0x40) + (0xfc + 1 - 0x80);
-	if(0x40 <= lo && lo <= 0x7e) {
-		code *= loa;
-		code += lo - 0x40;
-	} else if(0x80 <= lo && lo <= 0xfc) {
-		code *= loa;
-		code += 0x7e + 1 - 0x40;
-		code += lo - 0x80;
-	} else {
-		return 6;	// 無効コードの代表値
-	}
-	return code;
-}
-
-const unsigned char *scan_kanji_bitmap(unsigned char sjis_hi, unsigned char sjis_lo)
-{
-	unsigned char i;
-	for(i = 0; i < KANJI_CASH_SIZE; ++i) {
-		KANJI_CASH *ca = &g_kanji_cash[i];
-		if(ca->sjis_hi == 0 && ca->sjis_lo == 0) {
-			g_cash_first = i;
-		} else if(ca->sjis_hi == sjis_hi && ca->sjis_lo == sjis_lo) {
-			return ca->bitmap;
+	static unsigned short sjis_to_liner(unsigned char up, unsigned char lo)
+	{
+		unsigned short code;
+		if(0x81 <= up && up <= 0x9f) {
+			code = up - 0x81;
+		} else if(0xe0 <= up && up <= 0xef) {
+			code = (0x9f + 1 - 0x81) + up - 0xe0;
+		} else {
+			return 6;	// 無効コードの代表値
 		}
+		int loa = (0x7e + 1 - 0x40) + (0xfc + 1 - 0x80);
+		if(0x40 <= lo && lo <= 0x7e) {
+			code *= loa;
+			code += lo - 0x40;
+		} else if(0x80 <= lo && lo <= 0xfc) {
+			code *= loa;
+			code += 0x7e + 1 - 0x40;
+			code += lo - 0x80;
+		} else {
+			return 6;	// 無効コードの代表値
+		}
+		return code;
 	}
-	return NULL;
-}
 
-
-unsigned char *alloc_kanji_bitmap(unsigned char sjis_hi, unsigned char sjis_lo)
-{
-	unsigned char *p = g_kanji_cash[g_cash_first].bitmap;
-	g_kanji_cash[g_cash_first].sjis_hi = sjis_hi;
-	g_kanji_cash[g_cash_first].sjis_lo = sjis_lo;
-	++g_cash_first;
-	if(g_cash_first >= KANJI_CASH_SIZE) g_cash_first = 0;
-	return p;
-}
-
-
-char read_kanji_bitmap(unsigned short pos, unsigned char *bitmap)
-{
-	FIL fl;
-	FRESULT res = f_open(&fl, "/w_kj12.bin", FA_OPEN_EXISTING | FA_READ);
-	if(res == 0) {
-		f_lseek(&fl, (long)pos * 18);
-		UINT rl;
-		f_read(&fl, bitmap, 18, &rl);
-		f_close(&fl);
-		return 1;
-	} else {
+	const unsigned char *scan_kanji_bitmap(unsigned char sjis_hi, unsigned char sjis_lo)
+	{
+		unsigned char i;
+		for(i = 0; i < KANJI_CASH_SIZE; ++i) {
+			KANJI_CASH *ca = &g_kanji_cash[i];
+			if(ca->sjis_hi == 0 && ca->sjis_lo == 0) {
+				g_cash_first = i;
+			} else if(ca->sjis_hi == sjis_hi && ca->sjis_lo == sjis_lo) {
+				return ca->bitmap;
+			}
+		}
 		return 0;
 	}
-}
+
+
+	unsigned char *alloc_kanji_bitmap(unsigned char sjis_hi, unsigned char sjis_lo)
+	{
+		unsigned char *p = g_kanji_cash[g_cash_first].bitmap;
+		g_kanji_cash[g_cash_first].sjis_hi = sjis_hi;
+		g_kanji_cash[g_cash_first].sjis_lo = sjis_lo;
+		++g_cash_first;
+		if(g_cash_first >= KANJI_CASH_SIZE) g_cash_first = 0;
+		return p;
+	}
+
+
+	char read_kanji_bitmap(unsigned short pos, unsigned char *bitmap)
+	{
+		FIL fl;
+		FRESULT res = f_open(&fl, "/w_kj12.bin", FA_OPEN_EXISTING | FA_READ);
+		if(res == 0) {
+			f_lseek(&fl, (long)pos * 18);
+			UINT rl;
+			f_read(&fl, bitmap, 18, &rl);
+			f_close(&fl);
+			return 1;
+		} else {
+			return 0;
+		}
+	}
 #endif
 
 
@@ -378,8 +377,8 @@ char read_kanji_bitmap(unsigned short pos, unsigned char *bitmap)
 			if(-KANJI_FONT_WIDTH >= x || x >= lcd_width_) return;
 
 			if(kanji_mode_ == 0) {
-				draw_image_P(x - FONT_WIDTH, y, &font6x12[9 * 18], 6, 12);
-				draw_image_P(x, y, &font6x12[9 * 19], 6, 12);
+				draw_image_P(x - FONT_WIDTH, y, &font6x12_[9 * 18], 6, 12);
+				draw_image_P(x, y, &font6x12_[9 * 19], 6, 12);
 				return;
 			}
 
@@ -392,8 +391,8 @@ char read_kanji_bitmap(unsigned short pos, unsigned char *bitmap)
 				if(read_kanji_bitmap(pos, bitmap)) {
 					draw_image(x - FONT_WIDTH, y, bitmap, KANJI_FONT_WIDTH, KANJI_FONT_HEIGHT);
 				} else {
-					draw_image_P(x - FONT_WIDTH, y, &font6x12[9 * 18], FONT_WIDTH, FONT_HEIGHT);
-					draw_image_P(x, y, &font6x12[9 * 19], FONT_WIDTH, FONT_HEIGHT);
+					draw_image_P(x - FONT_WIDTH, y, &font6x12_[9 * 18], FONT_WIDTH, FONT_HEIGHT);
+					draw_image_P(x, y, &font6x12_[9 * 19], FONT_WIDTH, FONT_HEIGHT);
 				}
 			}
 		} else
@@ -403,7 +402,7 @@ char read_kanji_bitmap(unsigned short pos, unsigned char *bitmap)
 				if(-FONT_WIDTH >= x || static_cast<uint16_t>(x) >= lcd_width_) {
 					return;
 				}
-				draw_image_P(x, y, &font6x12[(code << 3) + code], FONT_WIDTH, FONT_HEIGHT);
+				draw_image_P(x, y, &font6x12_[(code << 3) + code], FONT_WIDTH, FONT_HEIGHT);
 			} else if(static_cast<uint8_t>(code) >= 0x81
 				   && static_cast<uint8_t>(code) <= 0x9f) {
 				multi_byte_hi_ = code;
@@ -414,7 +413,7 @@ char read_kanji_bitmap(unsigned short pos, unsigned char *bitmap)
 				// 無効キャラクターの意味として
 				multi_byte_hi_ = 0;
 				if(-FONT_WIDTH >= x || static_cast<uint16_t>(x) >= lcd_width_) return;
-				draw_image_P(x, y, &font6x12[(1 << 3)], FONT_WIDTH, FONT_HEIGHT);
+				draw_image_P(x, y, &font6x12_[(1 << 3)], FONT_WIDTH, FONT_HEIGHT);
 			}
 		}
 	}

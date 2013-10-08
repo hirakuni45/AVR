@@ -21,7 +21,7 @@
 #include <util/delay.h>
 #include "lcdio.hpp"
 
-namespace lcdio {
+namespace device {
 
 	// ATMEGA328 を使う場合で、RXD,TXD を使う場合、データポートを全て利用できない
 	// その為、効率が悪いが、データポートを二分割で利用する必要がある。
@@ -92,7 +92,7 @@ namespace lcdio {
 		@breif	LCD ハードウェアー関係の初期化など
 	*/
 	//-----------------------------------------------------------------//
-	void init()
+	void lcdio::init()
 	{
 		INIT_PORT_DIRECTION_();
 
@@ -132,7 +132,7 @@ namespace lcdio {
 		@param[in]	p	フレームバッファのポインター(1024 バイト）
 	*/
 	//-----------------------------------------------------------------//
-	void copy(const uint8_t *p)
+	void lcdio::copy(const uint8_t *p)
 	{
 		for(uint8_t j = 0; j < 8; ++j) {
 			LCD_RS_LO_();
