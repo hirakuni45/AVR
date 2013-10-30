@@ -8,6 +8,21 @@
 
 namespace game {
 
+	static uint8_t rand_()
+	{
+		static uint8_t v = 91;
+		v += v << 2;
+		++v;
+		static uint8_t m = 123;
+		uint8_t n = 0;
+		if(m & 0x04) n = 1;
+		if(m & 0x80) n ^= 1;
+		m += m;
+		if(n == 0) ++m;
+		return v ^ m;
+	}
+
+
 	bool tetris::clip_x_(const position& pos, const block& bck)
 	{
 		for(unsigned char i = 0; i < 4; ++i) {
@@ -213,8 +228,7 @@ namespace game {
 		// 新規ブロック発生
 		if(bend) {
 			v_pos_ = 0;
-//			block_idx_ = rand() & 255;
-			block_idx_ %= 6;
+			block_idx_ = rand_() % 6;
 			v_spd_ += 1;
 			if(v_spd_ >= 1024) v_spd_ = 1024;
 			block_pos_.x = 4;
