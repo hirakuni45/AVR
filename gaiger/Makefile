@@ -16,7 +16,7 @@ MCU_TARGET	=	atmega328p
 # OPTIMIZE	= -Os -mcall-prologues
 OPTIMIZE	= -O2 -mcall-prologues
 DEFS		=	$(addprefix -I, $(INC_ROOT))
-DEFS		+=	-DF_CPU=19660800UL
+DEFS		+=	-DF_CPU=12000000UL
 LIBS		=
 
 # You should not have to change anything below here.

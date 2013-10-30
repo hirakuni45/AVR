@@ -1,18 +1,25 @@
 //=====================================================================//
 /*!	@file
-	@breif	ATMEGA328P FrSky ディスプレイ・メイン@n
-	PC0       - LCD DB0 @n
-	PC1       - LCD DB1 @n
-	PC2       - LCD DB2 @n
-	PC3       - LCD DB3 @n
-	PC4       - LCD RS  @n
-	PC5       - LCD E   @n
+	@breif	ATMEGA328P ガイガーカウンター・メイン@n
 	PB0       - @n
 	PB1(OC1A) - BUZZER  @n
 	PB2(OC1B) - @n
 	PB3       - @n
-	PB4       - LCD CS1 @n
-	PB5       - LCD CS2 @n
+	PB4       - @n
+	PB5       - @n
+	PB6       - 12MHz X-TAL @n
+	PB7       - 12MHz X-TAL @n
+	PC0       - @n
+	PC1       - @n
+	PC2       - LCD CS1 @n
+	PC3       - LCD CS2 @n
+	PC4       - LCD RS  @n
+	PC5       - LCD E   @n
+	PC6       - /RESET   @n
+	PD0       - LCD DB0 @n
+	PD1       - LCD DB1 @n
+	PD2       - LCD DB2 @n
+	PD3       - LCD DB3 @n
 	PD4       - LCD DB4 @n
 	PD5       - LCD DB5 @n
 	PD6       - LCD DB6 @n
@@ -140,5 +147,3 @@ void install_task(void (*task)(void))
     main_task_ = task;
 }
 
-
-/* ----- End Of File ----- */

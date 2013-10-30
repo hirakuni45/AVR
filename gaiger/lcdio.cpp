@@ -25,35 +25,43 @@ namespace device {
 
 	// ATMEGA328 を使う場合で、RXD,TXD を使う場合、データポートを全て利用できない
 	// その為、効率が悪いが、データポートを二分割で利用する必要がある。
-	static void INIT_PORT_DIRECTION_(void)
+	static void INIT_PORT_DIRECTION_()
 	{
-		DDRB |= 0x30;
-		DDRC |= 0x3f;
-		DDRD |= 0xf0;
+//		DDRB |= 0x30;
+//		DDRC |= 0x3f;
+//		DDRC |= 0x30;
+//		DDRD |= 0xf0;
+		DDRC |= 0x3c;
+		DDRD |= 0xff;
 	}
 
 	static inline void LCD_DATA_(unsigned char x)
 	{
-		PORTC = (PORTC & 0xf0) | (x & 0x0f);
-		PORTD = (PORTD & 0x0f) | (x & 0xf0);
+//		PORTC = (PORTC & 0xf0) | (x & 0x0f);
+//		PORTD = (PORTD & 0x0f) | (x & 0xf0);
+		PORTD = x;
 	}
 
-	static inline void LCD_CS1_ENA_(void) { PORTB |=  0x10; }
-	static inline void LCD_CS2_ENA_(void) { PORTB |=  0x20; }
-	static inline void LCD_CS1_DIS_(void) { PORTB &= ~0x10; }
-	static inline void LCD_CS2_DIS_(void) { PORTB &= ~0x20; }
-	static inline void LCD_RS_LO_(void) { PORTC &= ~0x10; }
-	static inline void LCD_RS_HI_(void) { PORTC |=  0x10; }
-	static inline void LCD_E_LO_(void) { PORTC &= ~0x20; }
-	static inline void LCD_E_HI_(void) { PORTC |=  0x20; }
+//	static inline void LCD_CS1_ENA_() { PORTB |=  0x10; }
+//	static inline void LCD_CS2_ENA_() { PORTB |=  0x20; }
+//	static inline void LCD_CS1_DIS_() { PORTB &= ~0x10; }
+//	static inline void LCD_CS2_DIS_() { PORTB &= ~0x20; }
+	static inline void LCD_CS1_ENA_() { PORTC |=  0x04; }	// PC2
+	static inline void LCD_CS1_DIS_() { PORTC &= ~0x04; }
+	static inline void LCD_CS2_ENA_() { PORTC |=  0x08; }	// PC3
+	static inline void LCD_CS2_DIS_() { PORTC &= ~0x08; }
+	static inline void LCD_RS_LO_() { PORTC &= ~0x10; }		// PC4
+	static inline void LCD_RS_HI_() { PORTC |=  0x10; }
+	static inline void LCD_E_LO_() { PORTC &= ~0x20; }		// PC5
+	static inline void LCD_E_HI_() { PORTC |=  0x20; }
 
 	// at 19.6MHz
-	static const int SETUP_TIME = 5;
-	static const int HOLD_TIME = 22;
+//	static const int SETUP_TIME_ = 5;
+//	static const int HOLD_TIME_  = 22;
 
 	// at 12MHz
-	// static const int SETUP_TIME = 4;
-	// static const int HOLD_TIME = 18;
+	static const int SETUP_TIME_ = 4;
+	static const int HOLD_TIME_  = 18;
 
 	/*------------------------------------------------------/
 	/	KS108B LCD Drive Interface Command					/
@@ -79,11 +87,11 @@ namespace device {
 	static void write_(unsigned char cmd)
 	{
 		LCD_DATA_(cmd);
-		_delay_loop_1(SETUP_TIME);
+		_delay_loop_1(SETUP_TIME_);
 		LCD_E_HI_();
-		_delay_loop_1(HOLD_TIME);
+		_delay_loop_1(HOLD_TIME_);
 		LCD_E_LO_();
-		_delay_loop_1(HOLD_TIME);
+		_delay_loop_1(HOLD_TIME_);
 	}
 
 
@@ -101,7 +109,7 @@ namespace device {
 		LCD_CS1_DIS_();
 		LCD_CS2_DIS_();
 //		decoder_select(DECODE_LCD_RES);	// LCD reset assert
-		_delay_ms(1);					// 1ms reset signal
+//		_delay_ms(1);					// 1ms reset signal
 //		decoder_disable();				// LCD reset negate
 		_delay_ms(100);					// 100ms reset cycle
 
@@ -137,7 +145,7 @@ namespace device {
 		for(uint8_t j = 0; j < 8; ++j) {
 			LCD_RS_LO_();
 			LCD_CS1_ENA_();
-			_delay_loop_1(SETUP_TIME);
+			_delay_loop_1(SETUP_TIME_);
 			write_(0xb8 + j);		// set address X
 			write_(0x40);			// set address Y
 
@@ -150,7 +158,7 @@ namespace device {
 
 			LCD_RS_LO_();
 			LCD_CS2_ENA_();
-			_delay_loop_1(SETUP_TIME);
+			_delay_loop_1(SETUP_TIME_);
 			write_(0xb8 + j);		// set address X
 			write_(0x40);			// set address Y
 
