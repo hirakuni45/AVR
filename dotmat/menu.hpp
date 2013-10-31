@@ -1,77 +1,60 @@
 #pragma once
 //=====================================================================//
 /*!	@file
-	@breif	スイッチ関係（ヘッダー）
+	@breif	メニュー関係（ヘッダー）
 	@author	平松邦仁 (hira@rvf-rc45.net)
 */
 //=====================================================================//
-#include <stdint.h>
+#include "task.hpp"
 
-namespace system {
+namespace app {
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 	/*!
-		@breif	スイッチ・クラス
+		@breif	メニュー・クラス
 	*/
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-	class switch_input {
-
-		uint8_t	level_;
-		uint8_t	positive_;
-		uint8_t	negative_;
+	class menu : public i_task {
+		task&	task_;
 
 	public:
-		static const uint8_t RIGHT_UP   = 0x02;
-		static const uint8_t RIGHT_DOWN = 0x01;
-		static const uint8_t LEFT_UP    = 0x04;
-		static const uint8_t LEFT_DOWN  = 0x08;
-
-
 		//-----------------------------------------------------------------//
 		/*!
 			@breif	コンストラクター
 		*/
 		//-----------------------------------------------------------------//
-		switch_input() : level_(0), positive_(0), negative_(0) { }
+		menu(task& t) : task_(t) { }
 
 
 		//-----------------------------------------------------------------//
 		/*!
-			@breif	スイッチレベルの設定と状態の生成
-			@param[in]	level	スイッチレベル
+			@breif	デストラクター
 		*/
 		//-----------------------------------------------------------------//
-		void set_level(uint8_t level) {
-			positive_ =  level & ~level_;
-			negative_ = ~level &  level_;
-			level_ = level;
-		}
+		virtual ~menu() { }
 
 
 		//-----------------------------------------------------------------//
 		/*!
-			@breif	レベルの取得
-			@return レベル
+			@breif	初期化
 		*/
 		//-----------------------------------------------------------------//
-		uint8_t get_level() const { return level_; }
+		void init();
 
 
 		//-----------------------------------------------------------------//
 		/*!
-			@breif	ポジティブレベルの取得
-			@return ポジティブレベル
+			@breif	サービス
 		*/
 		//-----------------------------------------------------------------//
-		uint8_t get_positive() const { return positive_; }
+		void service();
 
 
 		//-----------------------------------------------------------------//
 		/*!
-			@breif	ネガティブレベルの取得
-			@return ネガティブレベル
+			@breif	廃棄
 		*/
 		//-----------------------------------------------------------------//
-		uint8_t get_negative() const { return negative_; }
+		void destroy();
 	};
 }

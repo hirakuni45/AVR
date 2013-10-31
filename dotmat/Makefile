@@ -7,10 +7,14 @@ CSOURCES	=
 PSOURCES	=	mainloop.cpp \
 				monograph.cpp \
 				psound.cpp \
+				menu.cpp \
 				tetris.cpp
+
+#				ktimer.cpp
+
 ASOURCES	=
 
-MCU_TARGET	=	atmega88p
+MCU_TARGET	=	atmega168p
 
 # OPTIMIZE	= -Os -mcall-prologues
 OPTIMIZE	= -O2 -mcall-prologues
@@ -116,13 +120,13 @@ pdf: $(TARGET).pdf
 	$(FIG2DEV) -L png $< $@
 
 read_fuse:
-	avrsp -pb3 -d40 -Rf
+	hidspx -ph -d4 -Rf
 
-atmega88_write_fuse_low:
-	avrsp -pb3 -d40 -FL11100110
+write_fuse_low:
+	hidspx -ph -d4 -FL11100110
 
-atmega88_write_fuse_high:
-	avrsp -pb3 -d40 -FH11011001
+write_fuse_high:
+	hidspx -ph -d4 -FH11011100
 
 ram_length:
 	grep heap_start $(TARGET).map
@@ -146,7 +150,9 @@ tarball:
 # DO NOT DELETE
 
 mainloop.o: mainloop.hpp ledout.hpp monograph.hpp switch.hpp psound.hpp
-mainloop.o: tetris.hpp
+mainloop.o: menu.hpp task.hpp i_task.hpp
 monograph.o: monograph.hpp font6x12.h
 psound.o: psound.hpp
-tetris.o: tetris.hpp switch.hpp monograph.hpp
+menu.o: menu.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
+menu.o: tetris.hpp
+tetris.o: tetris.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp

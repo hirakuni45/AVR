@@ -6,7 +6,7 @@
 //=====================================================================//
 #include "tetris.hpp"
 
-namespace game {
+namespace app {
 
 	static uint8_t rand_()
 	{
@@ -15,8 +15,8 @@ namespace game {
 		++v;
 		static uint8_t m = 123;
 		uint8_t n = 0;
-		if(m & 0x04) n = 1;
-		if(m & 0x80) n ^= 1;
+		if(m & 0x02) n = 1;
+		if(m & 0x40) n ^= 1;
 		m += m;
 		if(n == 0) ++m;
 		return v ^ m;
@@ -46,7 +46,7 @@ namespace game {
 	void tetris::draw_block_(const position& pos, const block& bck)
 	{
 		for(unsigned char i = 0; i < 4; ++i) {
-			mng_.point_set(pos.x + bck.poss[i].x, pos.y + bck.poss[i].y); 
+			task_.at_monograph().point_set(pos.x + bck.poss[i].x, pos.y + bck.poss[i].y); 
 		}
 	}
 
@@ -71,8 +71,8 @@ namespace game {
 			break;
 		}
 		for(unsigned char i = 0; i < 4; ++i) {
-			out.poss[i].x = (in.poss[i].x * co) + (in.poss[i].y * si);
-			out.poss[i].y = (in.poss[i].y * co) - (in.poss[i].x * si);
+			out.poss[i].x = in.poss[i].x * co + in.poss[i].y * si;
+			out.poss[i].y = in.poss[i].y * co - in.poss[i].x * si;
 		}
 	}
 
@@ -96,12 +96,13 @@ namespace game {
 		for(char y = 0; y < 16; ++y) {
 			for(char x = 0; x < 8; ++x) {
 				if(bitmap_.get(position(x, y))) {
-					mng_.point_set(ofsx + x, y); 
+					task_.at_monograph().point_set(ofsx + x, y); 
 				}
 			}
 		}
 	}
 
+	// 消去ラインの確認
 	char tetris::line_up_map_() const
 	{
 		for(char y = 15; y >= 0; --y) {
@@ -112,8 +113,15 @@ namespace game {
 		return -1;
 	}
 
+
+	//-----------------------------------------------------------------//
+	/*!
+		@breif	初期化
+	*/
+	//-----------------------------------------------------------------//
 	void tetris::init()
 	{
+		// ブロックの定義
 		blocks_[0].poss[0] = position( 0, -1);
 		blocks_[0].poss[1] = position( 0, -2);
 		blocks_[0].poss[2] = position( 0,  0);
@@ -158,8 +166,9 @@ namespace game {
 		@param[in]	swi	スイッチ入力
 	*/
 	//-----------------------------------------------------------------//
-	void tetris::service(const system::switch_input& swi)
+	void tetris::service()
 	{
+		const system::switch_input& swi = task_.at_switch();
 		char ofsx = 4;
 		char width = 8;
 		position p = block_pos_;
@@ -181,15 +190,26 @@ namespace game {
 			bd = true;
 		}
 
-		// 自由落下
-		if(bd) {
-			v_pos_ += 2048;
+		// 消去ラインアニメーション、自由落下
+		if(del_delay_) {
+			--del_delay_;
+//			line_fill_anime_();
+//			bitmap_.erase_line(del_lines_.get());
 		} else {
-			v_pos_ += v_spd_;
-		}
-		if(v_pos_ >= 4096) {
-			v_pos_ = 0;
-			++p.y;
+			char y = line_up_map_();
+			if(y >= 0) {
+///				del_delay_ = 60 * 2;
+			}
+
+			if(bd) {
+				v_pos_ += 2048;
+			} else {
+				v_pos_ += v_spd_;
+			}
+			if(v_pos_ >= 4096) {
+				v_pos_ = 0;
+				++p.y;
+			}
 		}
 
 		block bk;
@@ -243,17 +263,9 @@ namespace game {
 			return;
 		}
 
-		// 消去ブロックの検査と消去
-		{
-			char y = line_up_map_();
-			if(y >= 0) {
-				bitmap_.erase(y);
-			}
-		}
-
 		// フレームの描画
-		mng_.line(ofsx - 1, 0, ofsx - 1, 15, 1);
-		mng_.line(ofsx + width, 0, ofsx + width, 15, 1);
+		task_.at_monograph().line(ofsx - 1, 0, ofsx - 1, 15, 1);
+		task_.at_monograph().line(ofsx + width, 0, ofsx + width, 15, 1);
 
 		// 積みブロックの描画
 		render_block_(ofsx);
@@ -263,5 +275,16 @@ namespace game {
 			draw_block_(pp, bk);
 		}
 	}
+
+
+	//-----------------------------------------------------------------//
+	/*!
+		@breif	廃棄
+	*/
+	//-----------------------------------------------------------------//
+	void tetris::destroy()
+	{
+	}
+
 }
 
