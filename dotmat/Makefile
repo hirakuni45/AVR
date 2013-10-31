@@ -8,9 +8,8 @@ PSOURCES	=	mainloop.cpp \
 				monograph.cpp \
 				psound.cpp \
 				menu.cpp \
-				tetris.cpp
-
-#				ktimer.cpp
+				tetris.cpp \
+				ktimer.cpp
 
 ASOURCES	=
 
@@ -128,7 +127,7 @@ write_fuse_low:
 write_fuse_high:
 	hidspx -ph -d4 -FH11011100
 
-ram_length:
+ram_size:
 	grep heap_start $(TARGET).map
 
 run:
@@ -151,8 +150,10 @@ tarball:
 
 mainloop.o: mainloop.hpp ledout.hpp monograph.hpp switch.hpp psound.hpp
 mainloop.o: menu.hpp task.hpp i_task.hpp
-monograph.o: monograph.hpp font6x12.h
+monograph.o: monograph.hpp
 psound.o: psound.hpp
 menu.o: menu.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
 menu.o: tetris.hpp
 tetris.o: tetris.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
+ktimer.o: ktimer.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
+ktimer.o: menu.hpp

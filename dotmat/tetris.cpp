@@ -25,7 +25,7 @@ namespace app {
 
 	bool tetris::clip_x_(const position& pos, const block& bck)
 	{
-		for(unsigned char i = 0; i < 4; ++i) {
+		for(uint8_t i = 0; i < 4; ++i) {
 			char x = bck.poss[i].x + pos.x;
 			if(x < 0 || x >= 8) return true;
 		}
@@ -35,7 +35,7 @@ namespace app {
 
 	bool tetris::clip_y_(const position& pos, const block& bck)
 	{
-		for(unsigned char i = 0; i < 4; ++i) {
+		for(uint8_t i = 0; i < 4; ++i) {
 			char y = bck.poss[i].y + pos.y;
 			if(y >= 16) return true;
 		}
@@ -121,32 +121,32 @@ namespace app {
 	//-----------------------------------------------------------------//
 	void tetris::init()
 	{
-		// ブロックの定義
+		// ブロックの定義(0)
 		blocks_[0].poss[0] = position( 0, -1);
 		blocks_[0].poss[1] = position( 0, -2);
 		blocks_[0].poss[2] = position( 0,  0);
 		blocks_[0].poss[3] = position( 0,  1);
-
+		// ブロックの定義(1)
 		blocks_[1].poss[0] = position(-1,  0);
 		blocks_[1].poss[1] = position(-1, -1);
 		blocks_[1].poss[2] = position( 0,  0);
 		blocks_[1].poss[3] = position( 1,  0);
-
+		// ブロックの定義(2)
 		blocks_[2].poss[0] = position(-2,  0);
 		blocks_[2].poss[1] = position(-1,  0);
 		blocks_[2].poss[2] = position( 0,  0);
 		blocks_[2].poss[3] = position( 0, -1);
-
+		// ブロックの定義(3)
 		blocks_[3].poss[0] = position(-1,  0);
 		blocks_[3].poss[1] = position( 0,  0);
 		blocks_[3].poss[2] = position( 0, -1);
 		blocks_[3].poss[3] = position( 1,  0);
-
+		// ブロックの定義(4)
 		blocks_[4].poss[0] = position(-1,  0);
 		blocks_[4].poss[1] = position( 0,  0);
 		blocks_[4].poss[2] = position( 0, -1);
 		blocks_[4].poss[3] = position( 1, -1);
-
+		// ブロックの定義(5)
 		blocks_[5].poss[0] = position(-1, -1);
 		blocks_[5].poss[1] = position( 0, -1);
 		blocks_[5].poss[2] = position( 0,  0);
@@ -193,12 +193,11 @@ namespace app {
 		// 消去ラインアニメーション、自由落下
 		if(del_delay_) {
 			--del_delay_;
-//			line_fill_anime_();
 //			bitmap_.erase_line(del_lines_.get());
 		} else {
 			char y = line_up_map_();
 			if(y >= 0) {
-///				del_delay_ = 60 * 2;
+				bitmap_.erase_line(y);
 			}
 
 			if(bd) {
@@ -215,9 +214,12 @@ namespace app {
 		block bk;
 		// 位置の左右クリップ
 		rotate_(blocks_[block_idx_], angle_, bk);
-		if(clip_x_(p, bk)) {
+		if(clip_x_(p, bk) || scan_map_(p, bk)) {
 			p.x = block_pos_.x;
 		} else {
+			if(block_pos_.x != p.x) {
+				task_.at_psound().request(40, 2);
+			}
 			block_pos_.x = p.x;
 		}
 
@@ -226,6 +228,9 @@ namespace app {
 		if(clip_x_(p, bk)) {
 			bk = blocks_[block_idx_];
 		} else {
+			if(angle_ != an) {
+				task_.at_psound().request(45, 2);
+			}
 			angle_ = an;
 		}
 

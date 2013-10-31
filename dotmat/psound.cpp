@@ -31,7 +31,7 @@
 
 namespace device {
 
-	static const prog_uint16_t sound12_para_[] = {
+	static const prog_uint16_t sound12_para_[] PROGMEM = {
 		9393, 8866, 8369, 7899, 7456, 7037, 6642, 6269, 5918, 5585, 5272, 4976
 	};
 
@@ -42,7 +42,6 @@ namespace device {
 		TCCR1C = 0b00000000;
 		enable_ = false;
 	}
-
 
 	static void enable_dev_(uint8_t divide)
 	{
@@ -110,7 +109,7 @@ namespace device {
 			++count_;
 		} else {
 			if(music_player_) {
-				const prog_uint8_t *p = music_player_;
+				const prog_uint8_t* p = music_player_;
 				uint8_t idx = pgm_read_byte_near(p);
 				if(idx) {
 					++p;
@@ -154,8 +153,9 @@ namespace device {
 	{
 		if(music == 0) return;
 
-		uint8_t idx = *music++;
-		uint8_t len = *music++;
+		uint8_t idx = pgm_read_byte_near(music++);
+		if(idx == 0) return;
+		uint8_t len = pgm_read_byte_near(music++);
 		request(idx - 1, len);
 		music_player_ = music;
 	}

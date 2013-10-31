@@ -12,11 +12,11 @@
 #endif
 
 // 標準的 ASCII フォント
+#ifdef LCD128X64
 static const uint8_t font6x12_[] PROGMEM = {
 #include "font6x12.h"
 };
-static const int FONT_WIDTH	 = 6;
-static const int FONT_HEIGHT = 12;
+#endif
 
 #if 0
 // プロポーショナル・フォントのテーブル
@@ -118,7 +118,12 @@ namespace graphics {
 		}
 		cash_first_ = 0;
 #endif
+#ifdef LCD128X64
+		font_width_ = 6;
+		font_height_ = 12;
+#endif
 		multi_byte_hi_ = 0;
+
 	}
 
 
@@ -404,6 +409,7 @@ namespace graphics {
 		} else
 #endif
 		{
+#ifdef LCD128X64
 			if(code >= 0) {
 				if(-FONT_WIDTH >= x || static_cast<uint16_t>(x) >= fb_width_) {
 					return;
@@ -421,6 +427,7 @@ namespace graphics {
 				if(-FONT_WIDTH >= x || static_cast<uint16_t>(x) >= fb_width_) return;
 				draw_image_P(x, y, &font6x12_[(1 << 3)], FONT_WIDTH, FONT_HEIGHT);
 			}
+#endif
 		}
 	}
 
@@ -440,7 +447,7 @@ namespace graphics {
 
 		while((code = *text++) != 0) {
 			draw_font(x, y, code);
-			x += FONT_WIDTH;
+			x += font_width_;
 		}
 		multi_byte_hi_ = 0;
 		return x;
@@ -462,7 +469,7 @@ namespace graphics {
 		while((code = pgm_read_byte_near(text)) != 0) {
 			++text;
 			draw_font(x, y, code);
-			x += FONT_WIDTH;
+			x += font_width_;
 		}
 		multi_byte_hi_ = 0;
 		return x;
@@ -478,7 +485,7 @@ namespace graphics {
 	void monograph::draw_string_center_P(const char* text)
 	{
 		int16_t xx = 0;
-		int16_t yy = FONT_HEIGHT;
+		int16_t yy = font_height_;
 		char ch;
 		int16_t l = 0;
 		const char* p = text;
@@ -487,15 +494,15 @@ namespace graphics {
 			if(ch == '\n') {
 				if(xx < l) xx = l;
 				l = 0;
-				yy += FONT_HEIGHT;
+				yy += font_height_;
 			} else {
-				l += FONT_WIDTH;
+				l += font_width_;
 			}
 		}
 		if(xx < l) xx = l;
 		--p;
 		ch = pgm_read_byte_near(p);
-		if(ch == '\n') yy -= FONT_HEIGHT;
+		if(ch == '\n') yy -= font_height_;
 
 		draw_string_P(64 - xx / 2, 32 - yy / 2, text);
 	}

@@ -43,6 +43,8 @@ namespace graphics {
 #endif
 		uint8_t	fb_[fb_width_ * fb_height_ / 8];
 		uint8_t	multi_byte_hi_;
+		int8_t	font_width_;
+		int8_t	font_height_;
 
 #ifdef KANJI_FONTS
 		// KANJI フォントをキャッシュする数

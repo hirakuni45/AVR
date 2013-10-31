@@ -68,6 +68,21 @@ namespace app {
 		};
 		bitmap	bitmap_;
 
+		struct flush_line {
+			char	ys_[4];
+			flush_line() {
+				for(uint8_t i = 0; i < 4; ++i) ys_[i] = -1;
+			}
+			void set(char y) {
+				for(uint8_t i = 0; i < 4; ++i) {
+					if(ys_[i] < 0) {
+						ys_[i] = y;
+						return;
+					}
+				}
+			}
+		};
+		flush_line	flush_line_;
 		uint16_t	del_delay_;
 
 		bool clip_x_(const position& pos, const block& bck);
