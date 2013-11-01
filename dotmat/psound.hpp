@@ -1,11 +1,16 @@
 #pragma once
 //=====================================================================//
 /*!	@file
-	@breif	パルス・サウンド関係（ヘッダー）
+	@breif	パルス・サウンド関係（ヘッダー）@n
+			マスターボリューム制御の場合、外部ＲＣ時定数 @n
+			R: 2200, C: 0.1uF
 	@author	平松邦仁 (hira@rvf-rc45.net)
 */
 //=====================================================================//
 #include <stdint.h>
+
+// Volume 制御を行う場合有効にする
+#define PSOUND_VOLUME_ENABLE
 
 namespace device {
 
@@ -16,25 +21,34 @@ namespace device {
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 	class psound {
 	public:
+
+		//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+		/*!
+			@breif	プレイヤー・コマンド定義 @n
+					８オクターブ１２平均音階率 @n
+					B7 は制御ビット、立てると、次のバイトが制御コード
+		*/
+		//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 		struct sound_key {
 			enum type {
-				C  = 0,
-				Cs = 1,
-				Db = 1,
-				D  = 2,
-				Ds = 3,
-				Eb = 3,
-				E  = 4,
-				F  = 5,
-				Fs = 6,
-				Gb = 6,
-				G  = 7,
-				Gs = 8,
-				Ab = 8,
-				A  = 9,
-				As = 10,
-				Bb = 10,
-				B  = 11,
+				C  = 0,		// C
+				Cs = 1,		// C#
+				Db = 1,		// Db
+				D  = 2,		// D
+				Ds = 3,		// D#
+				Eb = 3,		// Eb
+				E  = 4,		// E
+				F  = 5,		// F
+				Fs = 6,		// Fs
+				Gb = 6,		// Gb
+				G  = 7,		// G
+				Gs = 8,		// G#
+				Ab = 8,		// Ab
+				A  = 9,		// A
+				As = 10,	// A#
+				Bb = 10,	// Bb
+				B  = 11,	// B
+				Q  = 96		// 休符
 			};
 		};
 
@@ -44,7 +58,11 @@ namespace device {
 		uint8_t count_;
 		bool	enable_;
 		const prog_uint8_t*	music_player_;
-
+#ifdef PSOUND_VOLUME_ENABLE
+		uint8_t	master_volume_;
+		int8_t	fader_speed_;
+		uint8_t	envelope_;
+#endif
 		void disable_();
 	public:
 		//-----------------------------------------------------------------//
@@ -53,7 +71,11 @@ namespace device {
 		*/
 		//-----------------------------------------------------------------//
 		psound() : index_(0), length_(0), count_(0), enable_(false),
-			music_player_(0) { }
+			music_player_(0)
+#ifdef PSOUND_VOLUME_ENABLE
+			, master_volume_(0), fader_speed_(0), envelope_(0)
+#endif
+		{ }
 
 
 		//-----------------------------------------------------------------//
@@ -118,6 +140,27 @@ namespace device {
 		*/
 		//-----------------------------------------------------------------//
 		int16_t get_divider() const;
+
+#ifdef PSOUND_VOLUME_ENABLE
+		//-----------------------------------------------------------------//
+		/*!
+			@breif	マスター・ボリュームの設定
+			@param[in]	vol	ボリューム
+		*/
+		//-----------------------------------------------------------------//
+		void set_volume(uint8_t vol) { master_volume_ = vol; }
+
+
+		//-----------------------------------------------------------------//
+		/*!
+			@breif	フェーダーの設定
+			@param[in]	fader	フェーダー値
+		*/
+		//-----------------------------------------------------------------//
+		void set_fader(int8_t fader) {
+			fader_speed_ = fader;
+		}
+#endif
 	};
 
 }

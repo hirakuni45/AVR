@@ -122,35 +122,40 @@ namespace app {
 	void tetris::init()
 	{
 		// ブロックの定義(0)
-		blocks_[0].poss[0] = position( 0, -1);
-		blocks_[0].poss[1] = position( 0, -2);
-		blocks_[0].poss[2] = position( 0,  0);
-		blocks_[0].poss[3] = position( 0,  1);
+		blocks_[0].poss[0] = position( 0, -1);	// []
+		blocks_[0].poss[1] = position( 0, -2);	// []
+		blocks_[0].poss[2] = position( 0,  0);	// <>
+		blocks_[0].poss[3] = position( 0,  1);	// []
 		// ブロックの定義(1)
-		blocks_[1].poss[0] = position(-1,  0);
-		blocks_[1].poss[1] = position(-1, -1);
-		blocks_[1].poss[2] = position( 0,  0);
-		blocks_[1].poss[3] = position( 1,  0);
+		blocks_[1].poss[0] = position(-1, -1);	//
+		blocks_[1].poss[1] = position(-1,  0);	// 
+		blocks_[1].poss[2] = position( 0,  0);	// []<>[]
+		blocks_[1].poss[3] = position( 1,  0);	// []
 		// ブロックの定義(2)
-		blocks_[2].poss[0] = position(-2,  0);
-		blocks_[2].poss[1] = position(-1,  0);
-		blocks_[2].poss[2] = position( 0,  0);
-		blocks_[2].poss[3] = position( 0, -1);
+		blocks_[2].poss[0] = position(-1,  0);	// 
+		blocks_[2].poss[1] = position( 0,  0);	// 
+		blocks_[2].poss[2] = position( 1,  0);	// []<>[]
+		blocks_[2].poss[3] = position( 1, -1);	//     []
 		// ブロックの定義(3)
-		blocks_[3].poss[0] = position(-1,  0);
-		blocks_[3].poss[1] = position( 0,  0);
-		blocks_[3].poss[2] = position( 0, -1);
-		blocks_[3].poss[3] = position( 1,  0);
+		blocks_[3].poss[0] = position(-1,  0);	// 
+		blocks_[3].poss[1] = position( 0,  0);	// []<>[]
+		blocks_[3].poss[2] = position( 0, -1);	//   []
+		blocks_[3].poss[3] = position( 1,  0);	// 
 		// ブロックの定義(4)
-		blocks_[4].poss[0] = position(-1,  0);
-		blocks_[4].poss[1] = position( 0,  0);
-		blocks_[4].poss[2] = position( 0, -1);
-		blocks_[4].poss[3] = position( 1, -1);
+		blocks_[4].poss[0] = position(-1,  0);	// 
+		blocks_[4].poss[1] = position( 0,  0);	// []<>
+		blocks_[4].poss[2] = position( 0, -1);	//   [][]
+		blocks_[4].poss[3] = position( 1, -1);	// 
 		// ブロックの定義(5)
-		blocks_[5].poss[0] = position(-1, -1);
-		blocks_[5].poss[1] = position( 0, -1);
-		blocks_[5].poss[2] = position( 0,  0);
-		blocks_[5].poss[3] = position( 1,  0);
+		blocks_[5].poss[0] = position(-1, -1);	// 
+		blocks_[5].poss[1] = position( 0, -1);	// 
+		blocks_[5].poss[2] = position( 0,  0);	//   <>[]
+		blocks_[5].poss[3] = position( 1,  0);	// [][]
+		// ブロックの定義(6)
+		blocks_[6].poss[0] = position(-1, -1);	// 
+		blocks_[6].poss[1] = position( 0, -1);	// 
+		blocks_[6].poss[2] = position( 0,  0);	// []<>
+		blocks_[6].poss[3] = position(-1,  0);	// [][]
 
 		v_spd_ = 128;
 		v_pos_ = 0;
@@ -253,11 +258,12 @@ namespace app {
 		// 新規ブロック発生
 		if(bend) {
 			v_pos_ = 0;
-			block_idx_ = rand_() % 6;
+			block_idx_ = rand_() % tetris_blocks_;
 			v_spd_ += 1;
 			if(v_spd_ >= 1024) v_spd_ = 1024;
 			block_pos_.x = 4;
 			block_pos_.y = -2;
+			angle_ = 0;
 		} else {
 			block_pos_.y = p.y;
 		}

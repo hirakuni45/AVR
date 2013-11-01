@@ -31,6 +31,8 @@ namespace app {
 	{
 //		task_.at_psound().request(30, 100);
 		task_.at_psound().play_P(music_);
+		task_.at_psound().set_volume(0);
+		task_.at_psound().set_fader(4);
 		frame_ = 0;
 	}
 

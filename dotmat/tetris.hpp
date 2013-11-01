@@ -17,6 +17,8 @@ namespace app {
 	class tetris : public i_task {
 		task&	task_;
 
+		static const uint8_t tetris_blocks_ = 7;
+
 		struct position {
 			char	x;
 			char	y;
@@ -37,7 +39,7 @@ namespace app {
 		short		v_spd_;
 		uint8_t		block_idx_;
 		char		angle_;
-		block		blocks_[6];
+		block		blocks_[tetris_blocks_];
 
 		class bitmap {
 			uint8_t	bits_[16];

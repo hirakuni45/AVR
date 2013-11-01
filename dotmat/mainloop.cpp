@@ -108,17 +108,11 @@ static void system_initialize_()
 
 //	ACSR = 0b01000100;
 
-// Timer0: 8 ビットタイマー設定 (高速PWM）
-//	OCR0A = 128;
-//	OCR0B = 8;
-//	TCCR0A = 0b00100011;	// 高速 PWM 出力 OC1B (PB2)
-//	TCCR0B = 0b00001001;	// 1/1 clock プリスケーラ－
-
 // Timer2: 8 ビットタイマー設定 (CTC)
 // 20000000 / 128 / 960[Hz]
 // ドットマトリックス LED のダイナミックスキャン周期
-	OCR2A = 163-1;
-	OCR2B = 0;
+	OCR2A  = 163-1;
+	OCR2B  = 0;
 	TCCR2A = 0b00000010;	// 比較、一致クリア(CTC)
 	TCCR2B = 0b00000101;	// 1/128 分周
 

@@ -23,6 +23,7 @@ namespace app {
 		graphics::monograph		mng_;
 
 		i_task*		task_;
+		i_task*		erase_;
 
 	public:
 		//-----------------------------------------------------------------//
@@ -30,7 +31,7 @@ namespace app {
 			@breif	コンストラクター
 		*/
 		//-----------------------------------------------------------------//
-		task() : task_(0) { }
+		task() : task_(0), erase_(0) { }
 
 
 		//-----------------------------------------------------------------//
@@ -85,8 +86,7 @@ namespace app {
 		//-----------------------------------------------------------------//
 		template <class TASK>
 		void start() {
-			if(task_) task_->destroy();
-			delete task_;
+			erase_ = task_;
 			task_ = new TASK(*this);
 			task_->init();
 		}
@@ -99,7 +99,14 @@ namespace app {
 		//-----------------------------------------------------------------//
 		void service() {
 			psound_.service();
+
 			if(task_) task_->service();
+
+			if(erase_) {
+				erase_->destroy();
+				delete erase_;
+				erase_ = 0;
+			}
 		}
 	};
 }

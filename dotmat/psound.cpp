@@ -31,7 +31,7 @@
 
 namespace device {
 
-	static const prog_uint16_t sound12_para_[] PROGMEM = {
+	static const uint16_t sound12_para_[] PROGMEM = {
 		9393, 8866, 8369, 7899, 7456, 7037, 6642, 6269, 5918, 5585, 5272, 4976
 	};
 
@@ -50,6 +50,13 @@ namespace device {
 		TCCR1C = 0b10000000;	// FOC1A
 	}
 
+#ifdef PSOUND_VOLUME_ENABLE
+	static void set_volume_(uint8_t vol)
+	{
+		OCR0B = vol;
+	}
+#endif
+
 	//-----------------------------------------------------------------//
 	/*!
 		@breif	パルスサウンド初期化
@@ -57,10 +64,17 @@ namespace device {
 	//-----------------------------------------------------------------//
 	void psound::init()
 	{
-		// output port
-		DDRB |= _BV(1);		// OC1A
+#ifdef PSOUND_VOLUME_ENABLE
+// Timer0: 8 ビットタイマー設定 (高速PWM）
+		OCR0A  = 0;
+		OCR0B  = 0;
+		TCCR0A = 0b00100011;	// 高速 PWM 出力 OC0B (PD5)
+		TCCR0B = 0b00000001;	// 1/1 clock プリスケーラ－
+		DDRD  |= 0b00100000;	// PD5 output
 
-	/* 16 ビットタイマー設定 */
+		master_volume_ = 0;
+#endif
+	// 16 ビットタイマー設定
 #if 1
 		TCNT1  = 0;
 
@@ -72,13 +86,14 @@ namespace device {
 								// 011: 1/64
 								// 100: 1/256
 								// 101: 1/1024
+		// output port
+		OCR1A = 0;
+		DDRB |= _BV(1);			// OC1A
 #endif
 		disable_();
-		OCR1A = 0;
 
 		length_ = 0;
 		count_ = 0;
-
 		music_player_ = 0;
 	}
 
@@ -99,6 +114,27 @@ namespace device {
 	//-----------------------------------------------------------------//
 	void psound::service()
 	{
+#ifdef PSOUND_VOLUME_ENABLE
+		// ボリューム・フェード
+		if(fader_speed_ != 0) {
+			int16_t cnt = master_volume_;
+			cnt += fader_speed_;
+			if(cnt > 255) cnt = 255;
+			else if(cnt < 0) cnt = 0;
+			master_volume_ = cnt;
+		}
+
+		uint16_t vol = master_volume_;
+		vol *= static_cast<uint16_t>(envelope_) + 1;
+		set_volume_(vol >> 8);
+
+		if(envelope_) {
+			int16_t tmp = envelope_;
+			tmp -= 25;
+			if(tmp < 0) tmp = 0;
+			envelope_ = tmp; 
+		}
+#endif
 		if(!enable_) return;
 
 		if(count_ < length_) {
@@ -110,19 +146,19 @@ namespace device {
 		} else {
 			if(music_player_) {
 				const prog_uint8_t* p = music_player_;
-				uint8_t idx = pgm_read_byte_near(p);
-				if(idx) {
+				uint8_t cmd = pgm_read_byte_near(p);
+				if(cmd) {
 					++p;
 					uint8_t len = pgm_read_byte_near(p);
 					++p;
-					request(idx - 1, len);
+					request(cmd - 1, len);
 					music_player_ = p;
 					return;
 				} else {
 					music_player_ = 0;
+					disable_();
 				}
 			}
-			disable_();
 		}
 	}
 
@@ -139,6 +175,7 @@ namespace device {
 		enable_ = true;
 		index_ = index;
 		length_ = length;
+		envelope_ = 255;	// attack
 		count_ = 0;
 	}
 
@@ -151,12 +188,7 @@ namespace device {
 	//-----------------------------------------------------------------//
 	void psound::play_P(const prog_uint8_t *music)
 	{
-		if(music == 0) return;
-
-		uint8_t idx = pgm_read_byte_near(music++);
-		if(idx == 0) return;
-		uint8_t len = pgm_read_byte_near(music++);
-		request(idx - 1, len);
+		enable_ = true;
 		music_player_ = music;
 	}
 
