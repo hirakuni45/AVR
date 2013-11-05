@@ -11,15 +11,68 @@
 namespace app {
 
 	static const uint8_t music_[] PROGMEM = {
-		device::psound::sound_key::C + 1 + 12 * 2, 10,
-		device::psound::sound_key::D + 1 + 12 * 2, 10,
-		device::psound::sound_key::E + 1 + 12 * 2, 10,
-		device::psound::sound_key::F + 1 + 12 * 2, 10,
-		device::psound::sound_key::G + 1 + 12 * 2, 10,
-		device::psound::sound_key::A + 1 + 12 * 2, 10,
-		device::psound::sound_key::B + 1 + 12 * 2, 10,
-		device::psound::sound_key::C + 1 + 12 * 3, 10,
-		0
+		device::psound::sound_key::TEMPO,	190,
+
+		device::psound::sound_key::D + 12 * 5, 28,
+		device::psound::sound_key::Q,           4,
+		device::psound::sound_key::D + 12 * 5, 28,
+		device::psound::sound_key::Q,           4,
+		device::psound::sound_key::E + 12 * 5, 28,
+		device::psound::sound_key::Q,           4,
+		device::psound::sound_key::Q,          16,
+		device::psound::sound_key::D + 12 * 5,  8,
+		device::psound::sound_key::E + 12 * 5,  8,
+		device::psound::sound_key::Fs+ 12 * 5, 16,
+		device::psound::sound_key::G + 12 * 5, 16,
+		device::psound::sound_key::Fs+ 12 * 5, 16,
+		device::psound::sound_key::E + 12 * 5,  8,
+		device::psound::sound_key::D + 12 * 5, 24,
+		device::psound::sound_key::Q,          32,
+
+		device::psound::sound_key::A + 12 * 5, 28,
+		device::psound::sound_key::Q,           4,
+		device::psound::sound_key::A + 12 * 5, 16,
+		device::psound::sound_key::D + 12 * 5, 16,
+		device::psound::sound_key::E + 12 * 5, 32,
+		device::psound::sound_key::Q,          16,
+		device::psound::sound_key::D + 12 * 5, 16,
+		device::psound::sound_key::A + 12 * 4, 16,
+		device::psound::sound_key::Cs+ 12 * 5, 16,
+		device::psound::sound_key::D + 12 * 5,  8,
+		device::psound::sound_key::E + 12 * 5, 32,
+		device::psound::sound_key::Q,          32,
+
+		device::psound::sound_key::D + 12 * 5, 28,
+		device::psound::sound_key::Q,           4,
+		device::psound::sound_key::D + 12 * 5, 28,
+		device::psound::sound_key::Q,           4,
+		device::psound::sound_key::E + 12 * 5, 28,
+		device::psound::sound_key::Q,           4,
+		device::psound::sound_key::Q,          16,
+		device::psound::sound_key::D + 12 * 5,  8,
+		device::psound::sound_key::E + 12 * 5,  8,
+		device::psound::sound_key::Fs + 12 * 5, 16,
+		device::psound::sound_key::G + 12 * 5, 16,
+		device::psound::sound_key::Fs+ 12 * 5, 16,
+		device::psound::sound_key::E + 12 * 5,  8,
+		device::psound::sound_key::D + 12 * 5, 24,
+		device::psound::sound_key::Q,          32,
+
+		device::psound::sound_key::A + 12 * 5, 28,
+		device::psound::sound_key::Q,           4,
+		device::psound::sound_key::A + 12 * 5, 16,
+		device::psound::sound_key::D + 12 * 5, 16,
+		device::psound::sound_key::E + 12 * 5, 32,
+		device::psound::sound_key::Q,          16,
+		device::psound::sound_key::D + 12 * 5, 16,
+		device::psound::sound_key::Cs+ 12 * 5, 16,
+		device::psound::sound_key::D + 12 * 5, 16,
+		device::psound::sound_key::E + 12 * 5,  8,
+		device::psound::sound_key::D + 12 * 5, 24,
+		device::psound::sound_key::Q,          16,
+
+		device::psound::sound_key::Q,          255,
+		device::psound::sound_key::END
 	};
 
 	//-----------------------------------------------------------------//
@@ -29,7 +82,6 @@ namespace app {
 	//-----------------------------------------------------------------//
 	void menu::init()
 	{
-//		task_.at_psound().request(30, 100);
 		task_.at_psound().play_P(music_);
 		task_.at_psound().set_volume(0);
 		task_.at_psound().set_fader(4);
@@ -53,6 +105,10 @@ namespace app {
 		++frame_;
 		if(frame_ >= 64) {
 			task_.start<tetris>();
+		}
+		const system::switch_input& swi = task_.at_switch();
+		if(swi.get_positive() & system::switch_input::RIGHT_DOWN) {
+			task_.at_psound().play_P(music_);
 		}
 	}
 

@@ -48,34 +48,50 @@ namespace device {
 				As = 10,	// A#
 				Bb = 10,	// Bb
 				B  = 11,	// B
-				Q  = 96		// 休符
+
+				Q  = 96,	// 休符
+				TEMPO,		// テンポ設定
+				END,		// 終曲
 			};
 		};
 
 	private:
-		uint8_t	index_;
-		uint8_t	length_;
-		uint8_t count_;
-		bool	enable_;
-		const prog_uint8_t*	music_player_;
+		struct music_slot {
+			bool	index_trg_;
+			uint8_t	index_reg_;
+			uint8_t	tempo_master_;
+			uint8_t	tempo_;
+			uint8_t	index_;
+			uint8_t	length_;
+			bool	enable_;
+			const prog_uint8_t*	music_player_;
+
 #ifdef PSOUND_VOLUME_ENABLE
-		uint8_t	master_volume_;
-		int8_t	fader_speed_;
-		uint8_t	envelope_;
+			uint8_t	volume_reg_;
+			uint8_t	volume_master_;
+			int8_t	fader_speed_;
+			uint8_t	envelope_;
 #endif
-		void disable_();
+			music_slot() : index_trg_(false), index_reg_(sound_key::Q),
+				tempo_master_(0), tempo_(180), index_(0), length_(0),
+				enable_(false), music_player_(0)
+#ifdef PSOUND_VOLUME_ENABLE
+				, volume_reg_(0),
+				volume_master_(0), fader_speed_(0), envelope_(0)
+#endif
+			{ }
+		};
+		music_slot	music_slot_[2];
+
+		void disable_(uint8_t chanel);
+		void service_chanel_(music_slot& ms);
 	public:
 		//-----------------------------------------------------------------//
 		/*!
 			@breif	コンストラクター
 		*/
 		//-----------------------------------------------------------------//
-		psound() : index_(0), length_(0), count_(0), enable_(false),
-			music_player_(0)
-#ifdef PSOUND_VOLUME_ENABLE
-			, master_volume_(0), fader_speed_(0), envelope_(0)
-#endif
-		{ }
+		psound() { }
 
 
 		//-----------------------------------------------------------------//
@@ -99,18 +115,32 @@ namespace device {
 			@breif	パルスサウンドリクエスト
 			@param[in]	index	音階
 			@param[in]	length	音長
+			@param[in]	chanel	チャンネル
 		*/
 		//-----------------------------------------------------------------//
-		void request(uint8_t index, uint8_t length);
+		void request(uint8_t index, uint8_t length, uint8_t chanel = 0);
 
 
 		//-----------------------------------------------------------------//
 		/*!
 			@breif	パルスサウンド演奏
 			@param[in]	music	音階と音長の組をテーブルにしたもの
+			@param[in]	chanel	チャンネル
 		*/
 		//-----------------------------------------------------------------//
-		void play_P(const prog_uint8_t *music);
+		void play_P(const prog_uint8_t *music, uint8_t chanel = 0);
+
+
+		//-----------------------------------------------------------------//
+		/*!
+			@breif	演奏中か取得
+			@param[in]	chanel	チャンネル
+			@return 演奏中なら「true」
+		*/
+		//-----------------------------------------------------------------//
+		bool get_play_state(uint8_t chanel = 0) const {
+			return music_slot_[chanel].music_player_ != 0;
+		}
 
 
 		//-----------------------------------------------------------------//
@@ -146,19 +176,23 @@ namespace device {
 		/*!
 			@breif	マスター・ボリュームの設定
 			@param[in]	vol	ボリューム
+			@param[in]	chanel	チャネル
 		*/
 		//-----------------------------------------------------------------//
-		void set_volume(uint8_t vol) { master_volume_ = vol; }
+		void set_volume(uint8_t vol, uint8_t chanel = 0) {
+			music_slot_[chanel].volume_master_ = vol;
+		}
 
 
 		//-----------------------------------------------------------------//
 		/*!
 			@breif	フェーダーの設定
 			@param[in]	fader	フェーダー値
+			@param[in]	chanel	チャネル
 		*/
 		//-----------------------------------------------------------------//
-		void set_fader(int8_t fader) {
-			fader_speed_ = fader;
+		void set_fader(int8_t fader, uint8_t chanel = 0) {
+			music_slot_[chanel].fader_speed_ = fader;
 		}
 #endif
 	};

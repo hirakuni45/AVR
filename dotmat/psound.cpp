@@ -15,33 +15,38 @@
 // octave-0
 // ( 0) C    : 32.70319566257483
 
-// octave-3 (center)
-// ( 0) C    : 261.63 Hz		9393
-// ( 1) C#/Db: 277.18 Hz		8866
-// ( 2) D    : 293.66 Hz		8369
-// ( 3) D#/Eb: 311.13 Hz		7899
-// ( 4) E    : 329.63 Hz		7456
-// ( 5) F    : 349.23 Hz		7037
-// ( 6) F#/Gb: 369.99 Hz		6642
-// ( 7) G    : 392.00 Hz		6269
-// ( 8) G#/Ab: 415.30 Hz		5918
-// ( 9) A    : 440.00 Hz		5585
-// (10) A#/Bb: 466.16 Hz		5272
-// (11) B    : 493.88 Hz		4976
+// Master clock: 20MHz  / 8
+// octave-1 (center)
+// ( 0) C    :  65.41 Hz	38220
+// ( 1) C#/Db:  69.30 Hz	36075
+// ( 2) D    :  73.42 Hz	34051
+// ( 3) D#/Eb:  77.78 Hz	32142
+// ( 4) E    :  82.41 Hz	30336
+// ( 5) F    :  87.31 Hz	28634
+// ( 6) F#/Gb:  92.50 Hz	27027
+// ( 7) G    :  98.00 Hz	25510
+// ( 8) G#/Ab: 103.83 Hz	24078
+// ( 9) A    : 110.00 Hz	22727
+// (10) A#/Bb: 116.54 Hz	21452
+// (11) B    : 123.47 Hz	20248
+// ※出力はさらに半分の周波数になる
 
 namespace device {
 
 	static const uint16_t sound12_para_[] PROGMEM = {
-		9393, 8866, 8369, 7899, 7456, 7037, 6642, 6269, 5918, 5585, 5272, 4976
+		38220-1, 36075-1, 34051-1, 32142-1,
+		30336-1, 28634-1, 27027-1, 25510-1,
+		24078-1, 22727-1, 21452-1, 20248-1
 	};
 
-	void psound::disable_()
+
+	static void disable_dev_()
 	{
 		TCCR1B = 0b00000000;
 		TCCR1A = 0b00000000;
 		TCCR1C = 0b00000000;
-		enable_ = false;
 	}
+
 
 	static void enable_dev_(uint8_t divide)
 	{
@@ -50,12 +55,14 @@ namespace device {
 		TCCR1C = 0b10000000;	// FOC1A
 	}
 
+
 #ifdef PSOUND_VOLUME_ENABLE
 	static void set_volume_(uint8_t vol)
 	{
 		OCR0B = vol;
 	}
 #endif
+
 
 	//-----------------------------------------------------------------//
 	/*!
@@ -72,7 +79,8 @@ namespace device {
 		TCCR0B = 0b00000001;	// 1/1 clock プリスケーラ－
 		DDRD  |= 0b00100000;	// PD5 output
 
-		master_volume_ = 0;
+		music_slot_[0].volume_master_ = 0;
+		music_slot_[1].volume_master_ = 0;
 #endif
 	// 16 ビットタイマー設定
 #if 1
@@ -90,11 +98,13 @@ namespace device {
 		OCR1A = 0;
 		DDRB |= _BV(1);			// OC1A
 #endif
-		disable_();
 
-		length_ = 0;
-		count_ = 0;
-		music_player_ = 0;
+		music_slot_[0].enable_ = false;
+		music_slot_[0].length_ = 0;
+		music_slot_[0].music_player_ = 0;
+		music_slot_[1].enable_ = false;
+		music_slot_[1].length_ = 0;
+		music_slot_[1].music_player_ = 0;
 	}
 
 
@@ -107,6 +117,64 @@ namespace device {
 	}
 
 
+	void psound::service_chanel_(music_slot& ms)
+	{
+#ifdef PSOUND_VOLUME_ENABLE
+		// ボリューム・フェード
+		if(ms.fader_speed_ != 0) {
+			int16_t cnt = ms.volume_master_;
+			cnt += ms.fader_speed_;
+			if(cnt > 255) cnt = 255;
+			else if(cnt < 0) cnt = 0;
+			ms.volume_master_ = cnt;
+		}
+
+		if(ms.envelope_) {
+			int16_t tmp = ms.envelope_;
+			tmp -= 20;
+			if(tmp < 0) tmp = 0;
+			ms.envelope_ = tmp; 
+		}
+
+		uint16_t vol = ms.volume_master_;
+		vol *= static_cast<uint16_t>(ms.envelope_) + 1;
+		ms.volume_reg_ = vol >> 8;
+#endif
+		if(ms.length_) {
+			uint16_t cnt = static_cast<uint16_t>(ms.tempo_master_);
+			cnt += static_cast<uint16_t>(ms.tempo_);
+			if(cnt > 255) {
+				--ms.length_;
+			}
+			ms.tempo_master_ = cnt;
+			ms.index_trg_ = false;
+		} else {
+			const prog_uint8_t* p = ms.music_player_;
+			while(p != 0) {
+				uint8_t cmd = pgm_read_byte_near(p);
+				++p;
+				if(cmd <= sound_key::Q) {
+					uint8_t len = pgm_read_byte_near(p);
+					++p;
+					ms.music_player_ = p;
+					ms.length_ = len - 1;
+					ms.index_reg_ = cmd;
+					ms.index_trg_ = true;
+					return;
+				} else if(cmd == sound_key::END) {
+					ms.music_player_ = 0;
+					ms.index_reg_ = sound_key::Q;
+					ms.index_trg_ = true;
+					return;
+				} else if(cmd == sound_key::TEMPO) {
+					ms.tempo_ = pgm_read_byte_near(p);
+					++p;
+				}
+			}
+		}
+	}
+
+
 	//-----------------------------------------------------------------//
 	/*!
 		@breif	パルスサウンドサービス(1/100 で呼ぶ）
@@ -114,51 +182,38 @@ namespace device {
 	//-----------------------------------------------------------------//
 	void psound::service()
 	{
-#ifdef PSOUND_VOLUME_ENABLE
-		// ボリューム・フェード
-		if(fader_speed_ != 0) {
-			int16_t cnt = master_volume_;
-			cnt += fader_speed_;
-			if(cnt > 255) cnt = 255;
-			else if(cnt < 0) cnt = 0;
-			master_volume_ = cnt;
+		bool ch0 = false;
+		if(music_slot_[0].music_player_) ch0 = true;
+		bool ch1 = false;
+		if(music_slot_[1].music_player_) ch1 = true;
+
+		service_chanel_(music_slot_[0]);
+		service_chanel_(music_slot_[1]);
+
+		bool trg = false;
+		uint8_t vol = 0;
+		uint8_t idx = sound_key::Q;
+		if(ch0) {
+			trg = music_slot_[0].index_trg_;
+			vol = music_slot_[0].volume_reg_;
+			idx = music_slot_[0].index_reg_;
+		}
+		if(ch1) {
+			trg = music_slot_[1].index_trg_;
+			vol = music_slot_[1].volume_reg_;
+			idx = music_slot_[1].index_reg_;
 		}
 
-		uint16_t vol = master_volume_;
-		vol *= static_cast<uint16_t>(envelope_) + 1;
-		set_volume_(vol >> 8);
-
-		if(envelope_) {
-			int16_t tmp = envelope_;
-			tmp -= 25;
-			if(tmp < 0) tmp = 0;
-			envelope_ = tmp; 
-		}
-#endif
-		if(!enable_) return;
-
-		if(count_ < length_) {
-			if(count_ == 0) {
+		set_volume_(vol);
+		if(trg) {
+			if(idx < sound_key::Q) {
+				set_frq_(idx);
 				enable_dev_(0b010);	// 1/8 divider
-				set_frq_(index_);
+			} else {
+				disable_dev_();
 			}
-			++count_;
-		} else {
-			if(music_player_) {
-				const prog_uint8_t* p = music_player_;
-				uint8_t cmd = pgm_read_byte_near(p);
-				if(cmd) {
-					++p;
-					uint8_t len = pgm_read_byte_near(p);
-					++p;
-					request(cmd - 1, len);
-					music_player_ = p;
-					return;
-				} else {
-					music_player_ = 0;
-					disable_();
-				}
-			}
+		} else if(ch0 && ch1) {
+			disable_dev_();
 		}
 	}
 
@@ -168,15 +223,18 @@ namespace device {
 		@breif	パルスサウンドリクエスト
 		@param[in]	index	音階
 		@param[in]	length	音長
+		@param[in]	chanel	チャンネル
 	*/
 	//-----------------------------------------------------------------//
-	void psound::request(uint8_t index, uint8_t length)
+	void psound::request(uint8_t index, uint8_t length, uint8_t chanel)
 	{
-		enable_ = true;
-		index_ = index;
-		length_ = length;
-		envelope_ = 255;	// attack
-		count_ = 0;
+		music_slot_[chanel].enable_ = true;
+		music_slot_[chanel].index_ = index;
+		enable_dev_(0b010);	// 1/8 divider
+		set_frq_(index);
+		music_slot_[chanel].length_ = length;
+		music_slot_[chanel].tempo_master_ = 0;
+		music_slot_[chanel].envelope_ = 255;	// attack
 	}
 
 
@@ -184,12 +242,15 @@ namespace device {
 	/*!
 		@breif	パルスサウンド演奏
 		@param[in]	music	音階と音長の組をテーブルにしたもの
+		@param[in]	chanel	チャンネル
 	*/
 	//-----------------------------------------------------------------//
-	void psound::play_P(const prog_uint8_t *music)
+	void psound::play_P(const prog_uint8_t *music, uint8_t chanel)
 	{
-		enable_ = true;
-		music_player_ = music;
+		music_slot_[chanel].enable_ = true;
+		music_slot_[chanel].music_player_ = music;
+		music_slot_[chanel].length_ = 0;
+		music_slot_[chanel].tempo_master_ = 0;
 	}
 
 
@@ -202,7 +263,8 @@ namespace device {
 	//-----------------------------------------------------------------//
 	void psound::direct(uint8_t divide, uint16_t cmpv)
 	{
-		enable_ = false;
+		music_slot_[0].enable_ = false;
+		music_slot_[1].enable_ = false;
 		enable_dev_(divide);
 		OCR1A = cmpv;
 		TCNT1 = 0;
@@ -219,7 +281,6 @@ namespace device {
 	bool psound::freq(uint32_t freq)
 	{
 		if(freq == 0) {
-			disable_();
 			return false;
 		}
 
@@ -234,7 +295,6 @@ namespace device {
 			else if(divi == 4) d = 256;
 			else if(divi == 5) d = 1024;
 			else {
-				disable_();
 				return false;	// Over flow...
 			}
 			a = b / d;
@@ -264,7 +324,6 @@ namespace device {
 
 		return -1;
 	}
-
 }
 
 
