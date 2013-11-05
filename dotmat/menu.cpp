@@ -1,6 +1,6 @@
 //=====================================================================//
 /*!	@file
-	@breif	メニュー関係
+	@brief	メニュー関係
 	@author	平松邦仁 (hira@rvf-rc45.net)
 */
 //=====================================================================//
@@ -10,8 +10,9 @@
 
 namespace app {
 
+	// ストラップ（doriko）、イントロ部分
 	static const uint8_t music_[] PROGMEM = {
-		device::psound::sound_key::TEMPO,	190,
+		device::psound::sound_key::TEMPO,	210,
 
 		device::psound::sound_key::D + 12 * 5, 28,
 		device::psound::sound_key::Q,           4,
@@ -77,7 +78,7 @@ namespace app {
 
 	//-----------------------------------------------------------------//
 	/*!
-		@breif	初期化
+		@brief	初期化
 	*/
 	//-----------------------------------------------------------------//
 	void menu::init()
@@ -91,7 +92,7 @@ namespace app {
 
 	//-----------------------------------------------------------------//
 	/*!
-		@breif	サービス
+		@brief	サービス
 	*/
 	//-----------------------------------------------------------------//
 	void menu::service()
@@ -107,7 +108,7 @@ namespace app {
 			task_.start<tetris>();
 		}
 		const system::switch_input& swi = task_.at_switch();
-		if(swi.get_positive() & system::switch_input::RIGHT_DOWN) {
+		if(swi.get_positive() & system::switch_input::bits::RIGHT_DOWN) {
 			task_.at_psound().play_P(music_);
 		}
 	}
@@ -115,7 +116,7 @@ namespace app {
 
 	//-----------------------------------------------------------------//
 	/*!
-		@breif	廃棄
+		@brief	廃棄
 	*/
 	//-----------------------------------------------------------------//
 	void menu::destroy()

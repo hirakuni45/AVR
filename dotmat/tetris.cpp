@@ -1,6 +1,6 @@
 //=====================================================================//
 /*!	@file
-	@breif	テトリス・クラス
+	@brief	テトリス・クラス
 	@author	平松邦仁 (hira@rvf-rc45.net)
 */
 //=====================================================================//
@@ -8,6 +8,7 @@
 
 namespace app {
 
+	/// 消去効果音
 	static const uint8_t snd_erase_[] PROGMEM = {
 		device::psound::sound_key::A + 12 * 4, 1,
 		device::psound::sound_key::B + 12 * 6, 1,
@@ -21,6 +22,7 @@ namespace app {
 		device::psound::sound_key::END
 	};
 
+	/// 落下効果音
 	static const uint8_t snd_fall_[] PROGMEM = {
 		device::psound::sound_key::A + 12 * 5, 1,
 		device::psound::sound_key::B + 12 * 5, 1,
@@ -29,6 +31,7 @@ namespace app {
 		device::psound::sound_key::END
 	};
 
+	/// 移動効果音
 	static const uint8_t snd_move_[] PROGMEM = {
 		device::psound::sound_key::A + 12 * 4, 1,
 		device::psound::sound_key::C + 12 * 4, 1,
@@ -36,6 +39,7 @@ namespace app {
 		device::psound::sound_key::END
 	};
 
+	/// 回転時効果音
 	static const uint8_t snd_rot_[] PROGMEM = {
 		device::psound::sound_key::A + 12 * 2, 1,
 		device::psound::sound_key::C + 12 * 2, 1,
@@ -96,13 +100,13 @@ namespace app {
 			si = 0; co = 1;
 			break;
 		case 1:	// 90
-			si = 1; co = 0;
+			si = -1; co = 0;
 			break;
 		case 2:	// 180
 			si = 0; co = -1;
 			break;
 		case 3:	// 270
-			si = -1; co = 0;
+			si = 1; co = 0;
 			break;
 		}
 		for(unsigned char i = 0; i < 4; ++i) {
@@ -151,16 +155,16 @@ namespace app {
 
 	//-----------------------------------------------------------------//
 	/*!
-		@breif	初期化
+		@brief	初期化
 	*/
 	//-----------------------------------------------------------------//
 	void tetris::init()
 	{
 		// ブロックの定義(0)
-		blocks_[0].poss[0] = position( 0, -1);	// []
-		blocks_[0].poss[1] = position( 0, -2);	// []
-		blocks_[0].poss[2] = position( 0,  0);	// <>
-		blocks_[0].poss[3] = position( 0,  1);	// []
+		blocks_[0].poss[0] = position(-2,  0);	//
+		blocks_[0].poss[1] = position(-1,  0);	//
+		blocks_[0].poss[2] = position( 0,  0);	// [][]<>[]
+		blocks_[0].poss[3] = position( 1,  0);	//
 		// ブロックの定義(1)
 		blocks_[1].poss[0] = position(-1, -1);	//
 		blocks_[1].poss[1] = position(-1,  0);	// 
@@ -202,8 +206,7 @@ namespace app {
 
 	//-----------------------------------------------------------------//
 	/*!
-		@breif	サービス
-		@param[in]	swi	スイッチ入力
+		@brief	サービス
 	*/
 	//-----------------------------------------------------------------//
 	void tetris::service()
@@ -212,21 +215,21 @@ namespace app {
 		char ofsx = 4;
 		char width = 8;
 		position p = block_pos_;
-		if(swi.get_positive() & system::switch_input::LEFT_UP) {
+		if(swi.get_positive() & system::switch_input::bits::LEFT_UP) {
 			--p.x ;
 		}
-		if(swi.get_positive() & system::switch_input::RIGHT_UP) {
+		if(swi.get_positive() & system::switch_input::bits::RIGHT_UP) {
 			++p.x;
 		}
 
 		char an = angle_;
-		if(swi.get_positive() & system::switch_input::RIGHT_DOWN) {
+		if(swi.get_positive() & system::switch_input::bits::RIGHT_DOWN) {
 			++an;
 			an &= 3;
 		}
 
 		bool bd = false;
-		if(swi.get_level() & system::switch_input::LEFT_DOWN) {
+		if(swi.get_level() & system::switch_input::bits::LEFT_DOWN) {
 			bd = true;
 		}
 
@@ -327,7 +330,7 @@ namespace app {
 
 	//-----------------------------------------------------------------//
 	/*!
-		@breif	廃棄
+		@brief	廃棄
 	*/
 	//-----------------------------------------------------------------//
 	void tetris::destroy()
