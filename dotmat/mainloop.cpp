@@ -182,18 +182,18 @@ int main()
 	sei();
 
 	sync_system_timer_();
-	ledout_.enable();
+	ledout_.enable();	///< LED 表示許可
 
-	task_.start<app::menu>();
+	task_.start<app::menu>();	///< メニュー・タスクの登録
 
 	while(1) {
 		graphics::monograph& mng = task_.at_monograph();
-		ledout_.copy(mng.fb());
-		mng.clear(0);
+		ledout_.copy(mng.fb());	///< フレームバッファを LED バッファにコピー
+		mng.clear(0);	///< フレームバッファを消去
 
-		task_.service();
+		task_.service();	///< 各タスクサービス
 
-		uint8_t sw = sync_system_timer_();
-		task_.at_switch().set_level(sw);
+		uint8_t sw = sync_system_timer_();	///< フレームの同期とスイッチのサンプリング
+		task_.at_switch().set_level(sw);	///< スイッチの状態を設定
 	}
 }

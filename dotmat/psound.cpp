@@ -83,7 +83,6 @@ namespace device {
 		music_slot_[1].volume_master_ = 0;
 #endif
 	// 16 ビットタイマー設定
-#if 1
 		TCNT1  = 0;
 
 		TCCR1A = 0b00000000;	// OC1A toggle (Compare Match)
@@ -97,7 +96,6 @@ namespace device {
 		// output port
 		OCR1A = 0;
 		DDRB |= _BV(1);			// OC1A
-#endif
 
 		music_slot_[0].enable_ = false;
 		music_slot_[0].length_ = 0;
@@ -119,7 +117,6 @@ namespace device {
 
 	void psound::service_chanel_(music_slot& ms)
 	{
-#ifdef PSOUND_VOLUME_ENABLE
 		// ボリューム・フェード
 		if(ms.fader_speed_ != 0) {
 			int16_t cnt = ms.volume_master_;
@@ -129,20 +126,24 @@ namespace device {
 			ms.volume_master_ = cnt;
 		}
 
-		if(ms.envelope_) {
-			int16_t tmp = ms.envelope_;
-			tmp -= 20;
+		// エンベロープカーブ生成
+		if(ms.envelope_down_) {
+			int16_t tmp = static_cast<int16_t>(ms.envelope_);
+			if(ms.envelope_down_ && ms.length_ < ms.envelope_cmp_) {
+				tmp -= static_cast<int16_t>(ms.envelope_down_);
+			}
 			if(tmp < 0) tmp = 0;
-			ms.envelope_ = tmp; 
+			else if(tmp > 255) tmp = 255;
+			ms.envelope_ = tmp;
 		}
 
 		uint16_t vol = ms.volume_master_;
 		vol *= static_cast<uint16_t>(ms.envelope_) + 1;
 		ms.volume_reg_ = vol >> 8;
-#endif
+
 		if(ms.length_) {
 			uint16_t cnt = static_cast<uint16_t>(ms.tempo_master_);
-			cnt += static_cast<uint16_t>(ms.tempo_);
+			cnt += static_cast<uint16_t>(ms.tempo_ + 1);
 			if(cnt > 255) {
 				--ms.length_;
 			}
@@ -157,9 +158,13 @@ namespace device {
 					uint8_t len = pgm_read_byte_near(p);
 					++p;
 					ms.music_player_ = p;
+					ms.length_top_ = len;
 					ms.length_ = len - 1;
 					ms.index_reg_ = cmd;
 					ms.index_trg_ = true;
+					ms.envelope_ = 255;
+ms.envelope_cmp_ = len >> 1;
+ms.envelope_down_ = 10;
 					return;
 				} else if(cmd == sound_key::END) {
 					ms.music_player_ = 0;
@@ -168,6 +173,9 @@ namespace device {
 					return;
 				} else if(cmd == sound_key::TEMPO) {
 					ms.tempo_ = pgm_read_byte_near(p);
+					++p;
+				} else if(cmd == sound_key::VOLUME) {
+					ms.volume_master_ = pgm_read_byte_near(p);
 					++p;
 				}
 			}
@@ -205,6 +213,7 @@ namespace device {
 		}
 
 		set_volume_(vol);
+
 		if(trg) {
 			if(idx < sound_key::Q) {
 				set_frq_(idx);
@@ -220,7 +229,7 @@ namespace device {
 
 	//-----------------------------------------------------------------//
 	/*!
-		@brief	パルスサウンドリクエスト
+		@brief	パルスサウンドリクエスト（直接）
 		@param[in]	index	音階
 		@param[in]	length	音長
 		@param[in]	chanel	チャンネル
@@ -228,13 +237,15 @@ namespace device {
 	//-----------------------------------------------------------------//
 	void psound::request(uint8_t index, uint8_t length, uint8_t chanel)
 	{
-		music_slot_[chanel].enable_ = true;
-		music_slot_[chanel].index_ = index;
+		music_slot& ms = music_slot_[chanel & 1];
+		ms.enable_ = true;
+		ms.index_ = index;
+		ms.length_top_ = length;
+		ms.length_ = length - 1;
+		ms.tempo_master_ = 0;
+		ms.envelope_ = 255;	// attack
 		enable_dev_(0b010);	// 1/8 divider
 		set_frq_(index);
-		music_slot_[chanel].length_ = length;
-		music_slot_[chanel].tempo_master_ = 0;
-		music_slot_[chanel].envelope_ = 255;	// attack
 	}
 
 
@@ -247,10 +258,15 @@ namespace device {
 	//-----------------------------------------------------------------//
 	void psound::play_P(const prog_uint8_t *music, uint8_t chanel)
 	{
-		music_slot_[chanel].enable_ = true;
-		music_slot_[chanel].music_player_ = music;
-		music_slot_[chanel].length_ = 0;
-		music_slot_[chanel].tempo_master_ = 0;
+		music_slot& ms = music_slot_[chanel & 1];
+
+		ms.enable_ = true;
+		ms.music_player_ = music;
+		ms.length_ = 0;
+		ms.tempo_master_ = 0;
+		ms.tempo_ = 255;			///< 初期設定テンポ
+		ms.fader_speed_ = 0;		///< フェーダー無し		
+		ms.volume_master_ = 255;	///< 初期設定マスターボリューム
 	}
 
 

@@ -42,22 +42,22 @@ namespace app {
 		block		blocks_[tetris_blocks_];
 
 		class bitmap {
-			uint8_t	bits_[16];
+			uint16_t	bits_[16];
 		public:
 			void set(const position& pos) {
 				if(pos.y < 0 || pos.y >= 16) return;
-				if(pos.x < 0 || pos.x >= 8) return;
+				if(pos.x < 0 || pos.x >= 10) return;
 				bits_[static_cast<uint8_t>(pos.y)] |= 1 << pos.x;
 			}
-			void reset(const position& pos) { bits_[pos.y & 15] &= ~(1 << (pos.x & 7)); }
+			void reset(const position& pos) { bits_[pos.y & 15] &= ~(1 << (pos.x & 15)); }
 			void clear() { for(uint8_t i = 0; i < 16; ++i) bits_[i] = 0; }
 			bool get(const position& pos) const {
 				if(pos.y >= 16) return true;
 				else if(pos.y < 0) return false;
-				if(bits_[static_cast<uint8_t>(pos.y)] & (1 << (pos.x & 7))) return true;
+				if(bits_[static_cast<uint8_t>(pos.y)] & (1 << (pos.x & 15))) return true;
 				else return false;
 			}
-			uint8_t get_byte(char y) const {
+			uint16_t get_line(char y) const {
 				return bits_[y & 15];
 			}
 			void erase_line(char y) {

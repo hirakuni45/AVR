@@ -66,7 +66,7 @@ namespace app {
 	{
 		for(uint8_t i = 0; i < 4; ++i) {
 			char x = bck.poss[i].x + pos.x;
-			if(x < 0 || x >= 8) return true;
+			if(x < 0 || x >= 10) return true;
 		}
 		return false;
 	}
@@ -133,7 +133,7 @@ namespace app {
 	void tetris::render_block_(char ofsx) const
 	{
 		for(char y = 0; y < 16; ++y) {
-			for(char x = 0; x < 8; ++x) {
+			for(char x = 0; x < 10; ++x) {
 				if(bitmap_.get(position(x, y))) {
 					task_.at_monograph().point_set(ofsx + x, y); 
 				}
@@ -145,7 +145,7 @@ namespace app {
 	char tetris::line_up_map_() const
 	{
 		for(char y = 15; y >= 0; --y) {
-			if(bitmap_.get_byte(y) == 0xff) {
+			if(bitmap_.get_line(y) == 0x3ff) {
 				return y;
 			}
 		}
@@ -198,7 +198,7 @@ namespace app {
 
 		v_spd_ = 128;
 		v_pos_ = 0;
-		block_pos_.x = 4;
+		block_pos_.x = 5;	/// 初期ブロック位置
 		block_pos_.y = -2;
 		bitmap_.clear();
 	}
@@ -212,8 +212,8 @@ namespace app {
 	void tetris::service()
 	{
 		const system::switch_input& swi = task_.at_switch();
-		char ofsx = 4;
-		char width = 8;
+		char ofsx = 3;
+		char width = 10;
 		position p = block_pos_;
 		if(swi.get_positive() & system::switch_input::bits::LEFT_UP) {
 			--p.x ;
@@ -301,7 +301,7 @@ namespace app {
 			block_idx_ = rand_() % tetris_blocks_;
 			v_spd_ += 1;
 			if(v_spd_ >= 1024) v_spd_ = 1024;
-			block_pos_.x = 4;
+			block_pos_.x = 5;	// 初期位置
 			block_pos_.y = -2;
 			angle_ = 0;
 		} else {
@@ -309,7 +309,7 @@ namespace app {
 		}
 
 		// ゲーム終了判定
-		if(bitmap_.get_byte(0)) {
+		if(bitmap_.get_line(0)) {
 			init();
 			return;
 		}

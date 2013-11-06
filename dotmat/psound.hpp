@@ -25,8 +25,7 @@ namespace device {
 		//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 		/*!
 			@brief	プレイヤー・コマンド定義 @n
-					８オクターブ１２平均音階率 @n
-					B7 は制御ビット、立てると、次のバイトが制御コード
+					８オクターブ１２平均音階率 
 		*/
 		//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 		struct sound_key {
@@ -36,29 +35,31 @@ namespace device {
 			*/
 			//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 			enum type {
-				C  = 0,		// C
-				Cs = 1,		// C#
-				Db = 1,		// Db
-				D  = 2,		// D
-				Ds = 3,		// D#
-				Eb = 3,		// Eb
-				E  = 4,		// E
-				F  = 5,		// F
-				Fs = 6,		// Fs
-				Gb = 6,		// Gb
-				G  = 7,		// G
-				Gs = 8,		// G#
-				Ab = 8,		// Ab
-				A  = 9,		// A
-				As = 10,	// A#
-				Bb = 10,	// Bb
-				B  = 11,	// B
+				C  = 0,		///< C
+				Cs = 1,		///< C#
+				Db = 1,		///< Db
+				D  = 2,		///< D
+				Ds = 3,		///< D#
+				Eb = 3,		///< Eb
+				E  = 4,		///< E
+				F  = 5,		///< F
+				Fs = 6,		///< Fs
+				Gb = 6,		///< Gb
+				G  = 7,		///< G
+				Gs = 8,		///< G#
+				Ab = 8,		///< Ab
+				A  = 9,		///< A
+				As = 10,	///< A#
+				Bb = 10,	///< Bb
+				B  = 11,	///< B
 
-				Q  = 96,	// 休符
-				TEMPO,		// テンポ設定
+				Q  = 96,	///< 休符
+				TEMPO,		///< テンポ設定
 
-				FOR,		// ループ開始
-				BEFORE,		// ループ終端
+				VOLUME,		///< ボリューム設定
+
+				FOR,		///< ループ開始
+				BEFORE,		///< ループ終端
 
 				COLOR0,		// 音色０
 				COLOR1,		// 音色１
@@ -80,7 +81,7 @@ namespace device {
 				VIBR6,		// ビブラート６
 				VIBR7,		// ビブラート７
 
-				END,		// 終曲
+				END,		///< 終曲
 			};
 		};
 
@@ -91,23 +92,24 @@ namespace device {
 			uint8_t	tempo_master_;
 			uint8_t	tempo_;
 			uint8_t	index_;
+			uint8_t	length_top_;
 			uint8_t	length_;
 			bool	enable_;
 			const prog_uint8_t*	music_player_;
 
-#ifdef PSOUND_VOLUME_ENABLE
 			uint8_t	volume_reg_;
 			uint8_t	volume_master_;
 			int8_t	fader_speed_;
 			uint8_t	envelope_;
-#endif
+			uint8_t	envelope_cmp_;
+			uint8_t	envelope_down_;
+
 			music_slot() : index_trg_(false), index_reg_(sound_key::Q),
-				tempo_master_(0), tempo_(180), index_(0), length_(0),
-				enable_(false), music_player_(0)
-#ifdef PSOUND_VOLUME_ENABLE
-				, volume_reg_(0),
-				volume_master_(0), fader_speed_(0), envelope_(0)
-#endif
+				tempo_master_(0), tempo_(180), index_(0),
+				length_top_(0), length_(0),
+				enable_(false), music_player_(0),
+				volume_reg_(0), volume_master_(0), fader_speed_(0),
+				envelope_(0), envelope_cmp_(0), envelope_down_(0)
 			{ }
 		};
 		music_slot	music_slot_[2];
@@ -141,7 +143,7 @@ namespace device {
 
 		//-----------------------------------------------------------------//
 		/*!
-			@brief	パルスサウンドリクエスト
+			@brief	パルスサウンドリクエスト（直接）
 			@param[in]	index	音階
 			@param[in]	length	音長
 			@param[in]	chanel	チャンネル
