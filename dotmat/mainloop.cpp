@@ -1,24 +1,28 @@
 //=====================================================================//
 /*!	@file
 	@brief	ATMEGA168 ドット・マトリックス・メイン@n
-			 Y-driver data lo:  PB0   @n
-			 plus-sound-speker: PB1   @n
-			 Y-driver clk:      PB2   @n
-			 Y-driver /stb:     PB3   @n
-			 SW-C:              PB4   @n
-			 SW-D:			    PB5   @n
-			 X-TAL (20MHz):     PB6   @n
-			 X-TAL (20MHz):     PB7   @n
-			 X-decoder-a:       PC0   @n
-			 X-decoder-b:       PC1   @n
-			 X-decoder-c:       PC2   @n
-			 X-decoder-d:       PC3   @n
-			/RESET:				PC6   @n
-			 Y-driver data hi:  PD0   @n
-							    PD1   @n
-			/X-decoder-gate:    PD2 (with 47K pull-up)  @n
-			 SW-A:              PD3   @n
-			 SW-B:              PD4
+			Y-driver data lo:		PB0   @n
+			Sound-Pulse:			PB1 (OC1A) @n
+			Y-driver clk:			PB2   @n
+			Y-driver /stb:			PB3   @n
+			SW-C:					PB4   @n
+			SW-D:					PB5   @n
+			CERALOCK (20MHz):		PB6   @n
+			CERALOCK (20MHz):		PB7   @n
+			X-decoder-a(138:A):		PC0   @n
+			X-decoder-b(138:B):		PC1   @n
+			X-decoder-c(138:C):		PC2   @n
+			X-decoder-d(138:G,/G):	PC3   @n
+			/RESET:					PC6   @n
+			Y-driver data hi:		PD0   @n
+									PD1   @n
+			/X-decoder-gate:    	PD2 (with 47K pull-up)  @n
+			SW-A:					PD3   @n
+			SW-B:					PD4   @n
+			Sound-Volume:			PD5 (OC0B) @n
+			Sound: (PB1 & PD5)->(RC filter)->(Amp) @n
+			R: 2200, C: 0.1uF @n
+			・CERALOCK はクリスタルの方がベター（ヒューズビットの書き換え注意）
 	@author	平松邦仁 (hira@rvf-rc45.net)
 */
 //=====================================================================//
@@ -106,7 +110,7 @@ static app::task task_;
 
 //-----------------------------------------------------------------//
 /*!
-	@brief	ATMEGA168P タイマー0 割り込みタスク（タイマー０比較一致）
+	@brief	ATMEGA168P タイマー２ 割り込みタスク（タイマー２比較一致）
 */
 //-----------------------------------------------------------------//
 ISR(TIMER2_COMPA_vect)
@@ -188,10 +192,10 @@ int main()
 
 	while(1) {
 		graphics::monograph& mng = task_.at_monograph();
-		ledout_.copy(mng.fb());	///< フレームバッファを LED バッファにコピー
-		mng.clear(0);	///< フレームバッファを消去
+		ledout_.copy(mng.fb());	///< フレームバッファを LED スキャンバッファにコピー
+		mng.clear(0);			///< フレームバッファを消去
 
-		task_.service();	///< 各タスクサービス
+		task_.service();		///< 各タスクサービス
 
 		uint8_t sw = sync_system_timer_();	///< フレームの同期とスイッチのサンプリング
 		task_.at_switch().set_level(sw);	///< スイッチの状態を設定

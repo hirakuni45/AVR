@@ -154,7 +154,7 @@ namespace device {
 			while(p != 0) {
 				uint8_t cmd = pgm_read_byte_near(p);
 				++p;
-				if(cmd <= sound_key::Q) {
+				if(cmd <= sound_key::Q) {	///< 音階の設定
 					uint8_t len = pgm_read_byte_near(p);
 					++p;
 					ms.music_player_ = p;
@@ -163,6 +163,7 @@ namespace device {
 					ms.index_reg_ = cmd;
 					ms.index_trg_ = true;
 					ms.envelope_ = 255;
+// 音色の設定
 ms.envelope_cmp_ = len >> 1;
 ms.envelope_down_ = 10;
 					return;
@@ -264,7 +265,7 @@ ms.envelope_down_ = 10;
 		ms.music_player_ = music;
 		ms.length_ = 0;
 		ms.tempo_master_ = 0;
-		ms.tempo_ = 255;			///< 初期設定テンポ
+		ms.tempo_ = 255;			///< 初期設定テンポ（一番速い）
 		ms.fader_speed_ = 0;		///< フェーダー無し		
 		ms.volume_master_ = 255;	///< 初期設定マスターボリューム
 	}

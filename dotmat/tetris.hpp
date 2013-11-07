@@ -17,7 +17,21 @@ namespace app {
 	class tetris : public i_task {
 		task&	task_;
 
-		static const uint8_t tetris_blocks_ = 7;
+		//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+		/*!
+			@brief	各スコア
+		*/
+		//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+		struct score {
+			enum type {
+				block_fall = 1,			///< ブロック落下
+				line_erase = 20,		///< ライン消去
+				block_fall_quick = 1,	///< 高速ブロック落下
+			};
+		};
+
+		///< テトリスブロック種
+		static const uint8_t 	tetris_blocks_ = 7;
 
 		struct position {
 			char	x;

@@ -201,6 +201,7 @@ namespace app {
 		block_pos_.x = 5;	/// 初期ブロック位置
 		block_pos_.y = -2;
 		bitmap_.clear();
+		score_ = 0;
 	}
 
 
@@ -241,6 +242,7 @@ namespace app {
 			char y = line_up_map_();
 			if(y >= 0) {
 				bitmap_.erase_line(y);
+				score_ += score::line_erase;
 				task_.at_psound().play_P(snd_erase_, 1);
 			}
 
@@ -296,6 +298,8 @@ namespace app {
 
 		// 新規ブロック発生
 		if(bend) {
+			score_ += score::block_fall;
+			if(bd) score_ += score::block_fall_quick;
 			task_.at_psound().play_P(snd_fall_, 1);
 			v_pos_ = 0;
 			block_idx_ = rand_() % tetris_blocks_;
