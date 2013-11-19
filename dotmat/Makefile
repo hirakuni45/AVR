@@ -6,10 +6,13 @@ TARGET		=	dotmat
 CSOURCES	=
 PSOURCES	=	mainloop.cpp \
 				monograph.cpp \
+				dm_draw.cpp \
 				psound.cpp \
+				music.cpp \
 				menu.cpp \
 				tetris.cpp \
-				ktimer.cpp
+				ktimer.cpp \
+				timer.cpp
 
 ASOURCES	=
 
@@ -135,6 +138,38 @@ run:
 #	avrsp -pb3 $(TARGET).hex
 #	avrsp -pb3 -d40 $(TARGET).hex
 
+create_bitmap:
+	bmc -no-header -text -offset  0*8,0 -size 3,5 images/matrix_font.png font3x5.h
+	bmc -no-header -text -offset  1*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
+	bmc -no-header -text -offset  2*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
+	bmc -no-header -text -offset  3*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
+	bmc -no-header -text -offset  4*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
+	bmc -no-header -text -offset  5*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
+	bmc -no-header -text -offset  6*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
+	bmc -no-header -text -offset  7*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
+	bmc -no-header -text -offset  8*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
+	bmc -no-header -text -offset  9*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
+	bmc -no-header -text -offset 10*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
+
+	bmc -no-header -text -offset  0*8,8 -size 7,10 images/matrix_font.png font7x10.h
+	bmc -no-header -text -offset  1*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+	bmc -no-header -text -offset  2*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+	bmc -no-header -text -offset  3*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+	bmc -no-header -text -offset  4*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+	bmc -no-header -text -offset  5*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+	bmc -no-header -text -offset  6*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+	bmc -no-header -text -offset  7*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+	bmc -no-header -text -offset  8*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+	bmc -no-header -text -offset  9*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+	bmc -no-header -text -offset 10*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+	bmc -no-header -text -offset 11*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+	bmc -no-header -text -offset 12*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+	bmc -no-header -text -offset 13*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
+
+	bmc -no-header -text -offset  0*16,48 -size 16,16 images/matrix_font.png icon.h
+	bmc -no-header -text -offset  1*16,48 -size 16,16 images/matrix_font.png -append icon.h
+	bmc -no-header -text -offset  2*16,48 -size 16,16 images/matrix_font.png -append icon.h
+
 depend:
 	makedepend -Y -- $(CFLAGS) $(INC_A) -- $(ASOURCES) $(CSOURCES) $(PSOURCES)
 
@@ -149,11 +184,16 @@ tarball:
 # DO NOT DELETE
 
 mainloop.o: mainloop.hpp ledout.hpp monograph.hpp switch.hpp psound.hpp
-mainloop.o: menu.hpp task.hpp i_task.hpp
+mainloop.o: menu.hpp task.hpp i_task.hpp dm_draw.hpp
 monograph.o: monograph.hpp
+dm_draw.o: dm_draw.hpp monograph.hpp font3x5.h font7x10.h icon.h
 psound.o: psound.hpp
+music.o: music.hpp psound.hpp
 menu.o: menu.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-menu.o: tetris.hpp
+menu.o: dm_draw.hpp ktimer.hpp tetris.hpp timer.hpp
 tetris.o: tetris.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
+tetris.o: dm_draw.hpp
 ktimer.o: ktimer.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-ktimer.o: menu.hpp
+ktimer.o: dm_draw.hpp menu.hpp
+timer.o: timer.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
+timer.o: dm_draw.hpp menu.hpp

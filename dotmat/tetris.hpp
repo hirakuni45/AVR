@@ -102,6 +102,7 @@ namespace app {
 		uint16_t	del_delay_;
 
 		uint16_t	score_;
+		uint8_t		gameover_;
 
 		bool clip_x_(const position& pos, const block& bck);
 		bool clip_y_(const position& pos, const block& bck);
@@ -121,7 +122,7 @@ namespace app {
 		//-----------------------------------------------------------------//
 		tetris(task& t) : task_(t), block_pos_(0, 0), v_pos_(0), v_spd_(0),
 			block_idx_(0), angle_(0),
-			del_delay_(0), score_(0) { }
+			del_delay_(0), score_(0), gameover_(0) { }
 
 
 		//-----------------------------------------------------------------//

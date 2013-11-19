@@ -232,24 +232,24 @@ namespace graphics {
 		int16_t y = y1;
 		if(dx > dy) {
 			for(int16_t i = 0; i <= dx; i++) {
+				if(c) point_set(x, y);
+				else point_reset(x, y);
 				m += dy;
 				if(m >= dx) {
 					m -= dx;
 					y += sy;
 				}
-				if(c) point_set(x, y);
-				else point_reset(x, y);
 				x += sx;
 			}
 		} else {
 			for(int16_t i = 0; i <= dy; i++) {
+				if(c) point_set(x, y);
+				else point_reset(x, y);
 				m += dx;
 				if(m >= dy) {
 					m -= dy;
 					x += sx;
 				}
-				if(c) point_set(x, y);
-				else point_reset(x, y);
 				y += sy;
 			}
 		}

@@ -9,6 +9,8 @@
 #include "monograph.hpp"
 #include "psound.hpp"
 #include "i_task.hpp"
+#include "dm_draw.hpp"
+#include "music.hpp"
 
 namespace app {
 
@@ -21,6 +23,8 @@ namespace app {
 		system::switch_input	swi_;
 		device::psound			psound_;
 		graphics::monograph		mng_;
+		sound::music			sm_;
+		graphics::dm_draw		dmd_;
 
 		i_task*		task_;
 		i_task*		erase_;
@@ -31,7 +35,8 @@ namespace app {
 			@brief	コンストラクター
 		*/
 		//-----------------------------------------------------------------//
-		task() : task_(0), erase_(0) { }
+		task() : swi_(), psound_(), mng_(), sm_(psound_), dmd_(mng_),
+			task_(0), erase_(0) { }
 
 
 		//-----------------------------------------------------------------//
@@ -77,6 +82,22 @@ namespace app {
 		*/
 		//-----------------------------------------------------------------//
 		graphics::monograph& at_monograph() { return mng_; }
+
+
+		//-----------------------------------------------------------------//
+		/*!
+			@brief	ドットマトリックス描画の参照
+		*/
+		//-----------------------------------------------------------------//
+		sound::music& at_music() { return sm_; }
+
+
+		//-----------------------------------------------------------------//
+		/*!
+			@brief	ドットマトリックス描画の参照
+		*/
+		//-----------------------------------------------------------------//
+		graphics::dm_draw& at_draw() { return dmd_; }
 
 
 		//-----------------------------------------------------------------//

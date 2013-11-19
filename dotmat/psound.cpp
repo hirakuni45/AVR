@@ -100,9 +100,11 @@ namespace device {
 		music_slot_[0].enable_ = false;
 		music_slot_[0].length_ = 0;
 		music_slot_[0].music_player_ = 0;
+		music_slot_[0].tr_ = 0;
 		music_slot_[1].enable_ = false;
 		music_slot_[1].length_ = 0;
 		music_slot_[1].music_player_ = 0;
+		music_slot_[1].tr_ = 0;
 	}
 
 
@@ -160,9 +162,17 @@ namespace device {
 					ms.music_player_ = p;
 					ms.length_top_ = len;
 					ms.length_ = len - 1;
-					ms.index_reg_ = cmd;
+					if(cmd < sound_key::Q) {
+						int8_t n = static_cast<int8_t>(cmd) + static_cast<int8_t>(ms.tr_);
+						if(n < 0) n = 0;
+						else if(n >= sound_key::Q) n = sound_key::Q - 1;
+						ms.index_reg_ = static_cast<uint8_t>(n);
+						ms.envelope_ = 255;
+					} else {
+						ms.index_reg_ = sound_key::Q;
+						ms.envelope_ = 0;
+					}
 					ms.index_trg_ = true;
-					ms.envelope_ = 255;
 // 音色の設定
 ms.envelope_cmp_ = len >> 1;
 ms.envelope_down_ = 10;
@@ -177,6 +187,27 @@ ms.envelope_down_ = 10;
 					++p;
 				} else if(cmd == sound_key::VOLUME) {
 					ms.volume_master_ = pgm_read_byte_near(p);
+					++p;
+				} else if(cmd == sound_key::FOR) {
+					uint8_t cnt = pgm_read_byte_near(p);
+					++p;
+					ms.push16(reinterpret_cast<uint16_t>(p));
+					ms.push(cnt);
+				} else if(cmd == sound_key::BEFORE) {
+					uint8_t cnt = ms.pop();
+					uint16_t ptr = ms.pop16();
+					--cnt;
+					if(cnt) {
+						p = reinterpret_cast<const prog_uint8_t*>(ptr);
+						ms.push16(ptr);
+						ms.push(cnt);
+						continue;
+					}
+				} else if(cmd == sound_key::TR) {
+					ms.tr_ = pgm_read_byte_near(p);
+					++p;
+				} else if(cmd == sound_key::TR_) {
+					ms.tr_ += pgm_read_byte_near(p);
 					++p;
 				}
 			}
@@ -244,6 +275,7 @@ ms.envelope_down_ = 10;
 		ms.length_top_ = length;
 		ms.length_ = length - 1;
 		ms.tempo_master_ = 0;
+		ms.tr_ = 0;
 		ms.envelope_ = 255;	// attack
 		enable_dev_(0b010);	// 1/8 divider
 		set_frq_(index);
@@ -264,6 +296,7 @@ ms.envelope_down_ = 10;
 		ms.enable_ = true;
 		ms.music_player_ = music;
 		ms.length_ = 0;
+		ms.tr_ = 0;
 		ms.tempo_master_ = 0;
 		ms.tempo_ = 255;			///< 初期設定テンポ（一番速い）
 		ms.fader_speed_ = 0;		///< フェーダー無し		

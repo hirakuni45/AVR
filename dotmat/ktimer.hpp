@@ -17,13 +17,37 @@ namespace app {
 	class ktimer : public i_task {
 		task&	task_;
 
+		struct mode {
+			enum type {
+				setting,		///< 時間設定
+				count,			///< カウントダウン
+				blink,			///< 点滅
+				sync_setting,	///< 同期して時間設定に戻る
+			};
+		};
+
+		mode::type		mode_;
+
+		uint8_t		jump_;
+		uint8_t		acc_;
+		uint16_t	down_count_;
+		uint16_t	counter_;
+		uint8_t		sec_;
+		uint8_t		frame_;
+
+		void draw_time_(uint16_t cnt);
+		void setting_();
+		void count_();
+		void blink_();
 	public:
 		//-----------------------------------------------------------------//
 		/*!
 			@brief	コンストラクター
 		*/
 		//-----------------------------------------------------------------//
-		ktimer(task& t) : task_(t) { }
+		ktimer(task& t) : task_(t),
+			mode_(mode::setting), jump_(0), acc_(0), down_count_(0), counter_(0),
+			sec_(0), frame_(0) { }
 
 
 		//-----------------------------------------------------------------//

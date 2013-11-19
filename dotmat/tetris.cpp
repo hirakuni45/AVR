@@ -8,45 +8,6 @@
 
 namespace app {
 
-	/// 消去効果音
-	static const uint8_t snd_erase_[] PROGMEM = {
-		device::psound::sound_key::A + 12 * 4, 1,
-		device::psound::sound_key::B + 12 * 6, 1,
-		device::psound::sound_key::E + 12 * 4, 1,
-		device::psound::sound_key::A + 12 * 4, 1,
-		device::psound::sound_key::B + 12 * 6, 1,
-		device::psound::sound_key::E + 12 * 4, 1,
-		device::psound::sound_key::A + 12 * 4, 1,
-		device::psound::sound_key::B + 12 * 6, 1,
-		device::psound::sound_key::E + 12 * 4, 1,
-		device::psound::sound_key::END
-	};
-
-	/// 落下効果音
-	static const uint8_t snd_fall_[] PROGMEM = {
-		device::psound::sound_key::A + 12 * 5, 1,
-		device::psound::sound_key::B + 12 * 5, 1,
-		device::psound::sound_key::D + 12 * 5, 1,
-		device::psound::sound_key::E + 12 * 5, 1,
-		device::psound::sound_key::END
-	};
-
-	/// 移動効果音
-	static const uint8_t snd_move_[] PROGMEM = {
-		device::psound::sound_key::A + 12 * 4, 1,
-		device::psound::sound_key::C + 12 * 4, 1,
-		device::psound::sound_key::E + 12 * 4, 1,
-		device::psound::sound_key::END
-	};
-
-	/// 回転時効果音
-	static const uint8_t snd_rot_[] PROGMEM = {
-		device::psound::sound_key::A + 12 * 2, 1,
-		device::psound::sound_key::C + 12 * 2, 1,
-		device::psound::sound_key::E + 12 * 2, 1,
-		device::psound::sound_key::END
-	};
-
 	static uint8_t rand_()
 	{
 		static uint8_t v = 91;
@@ -153,6 +114,12 @@ namespace app {
 	}
 
 
+	void game_()
+	{
+
+	}
+
+
 	//-----------------------------------------------------------------//
 	/*!
 		@brief	初期化
@@ -243,7 +210,7 @@ namespace app {
 			if(y >= 0) {
 				bitmap_.erase_line(y);
 				score_ += score::line_erase;
-				task_.at_psound().play_P(snd_erase_, 1);
+				task_.at_music().request(sound::music::id::tetris_erase, 1);
 			}
 
 			if(bd) {
@@ -264,7 +231,7 @@ namespace app {
 			p.x = block_pos_.x;
 		} else {
 			if(block_pos_.x != p.x) {
-				task_.at_psound().play_P(snd_move_, 1);
+				task_.at_music().request(sound::music::id::tetris_move, 1);
 			}
 			block_pos_.x = p.x;
 		}
@@ -275,7 +242,7 @@ namespace app {
 			bk = blocks_[block_idx_];
 		} else {
 			if(angle_ != an) {
-				task_.at_psound().play_P(snd_rot_, 1);
+				task_.at_music().request(sound::music::id::tetris_rot, 1);
 			}
 			angle_ = an;
 		}
@@ -300,7 +267,7 @@ namespace app {
 		if(bend) {
 			score_ += score::block_fall;
 			if(bd) score_ += score::block_fall_quick;
-			task_.at_psound().play_P(snd_fall_, 1);
+			task_.at_music().request(sound::music::id::tetris_fall, 1);
 			v_pos_ = 0;
 			block_idx_ = rand_() % tetris_blocks_;
 			v_spd_ += 1;
@@ -314,8 +281,7 @@ namespace app {
 
 		// ゲーム終了判定
 		if(bitmap_.get_line(0)) {
-			init();
-			return;
+			gameover_ = 120;
 		}
 
 		// フレームの描画

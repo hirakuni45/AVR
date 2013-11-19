@@ -61,6 +61,9 @@ namespace device {
 				FOR,		///< ループ開始
 				BEFORE,		///< ループ終端
 
+				TR,			///< トランスポーズ
+				TR_,		///< トランスポーズ差分
+
 				COLOR0,		// 音色０
 				COLOR1,		// 音色１
 				COLOR2,		// 音色２
@@ -93,6 +96,7 @@ namespace device {
 			uint8_t	tempo_master_;
 			uint8_t	tempo_;
 			uint8_t	index_;
+			uint8_t	tr_;
 			uint8_t	length_top_;
 			uint8_t	length_;
 			const prog_uint8_t*	music_player_;
@@ -104,14 +108,40 @@ namespace device {
 			uint8_t	envelope_cmp_;
 			uint8_t	envelope_down_;
 
+			uint8_t	stack_[8];
+			uint8_t	stack_pos_;
+
 			music_slot() : enable_(false), index_trg_(false),
 				index_reg_(sound_key::Q),
-				tempo_master_(0), tempo_(255), index_(0),
+				tempo_master_(0), tempo_(255), index_(0), tr_(0),
 				length_top_(0), length_(0),
 				music_player_(0),
 				volume_reg_(0), volume_master_(0), fader_speed_(0),
-				envelope_(0), envelope_cmp_(0), envelope_down_(0)
+				envelope_(0), envelope_cmp_(0), envelope_down_(0),
+				stack_pos_(0)
 			{ }
+
+			void push(uint8_t val) {
+				stack_[stack_pos_ & 7] = val;
+				++stack_pos_;
+			}
+
+			void push16(uint16_t val) {
+				push(val & 0xff);
+				push(val >> 8);
+			}
+
+			uint8_t pop() {
+				--stack_pos_;
+				return stack_[stack_pos_];
+			}
+
+			uint16_t pop16() {
+				uint16_t val = pop();
+				val <<= 8;
+				val |= pop();
+				return val;
+			}
 		};
 		music_slot	music_slot_[2];
 
