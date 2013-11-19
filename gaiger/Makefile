@@ -117,7 +117,7 @@ pdf: $(TARGET).pdf
 	$(FIG2DEV) -L png $< $@
 
 read_fuse:
-	avrsp -pb3 -d40 -Rf
+	hidspx -ph -d4 -Rf
 
 atmega88_write_fuse_low:
 	avrsp -pb3 -d40 -FL11100110
@@ -129,7 +129,7 @@ ram_length:
 	grep heap_start $(TARGET).map
 
 run:
-	avrsp -pb3 $(TARGET).hex
+	hidspx -ph $(TARGET).hex
 #	avrsp -pb3 -d40 $(TARGET).hex
 
 depend:
