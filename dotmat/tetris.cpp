@@ -5,21 +5,28 @@
 */
 //=====================================================================//
 #include "tetris.hpp"
+#include "menu.hpp"
 
 namespace app {
+	static uint8_t v_ = 91;
+	static uint8_t m_ = 123;
+
+	static void randmize_(uint8_t v, uint8_t m)
+	{
+		v_ = v;
+		m_ = m;
+	}
 
 	static uint8_t rand_()
 	{
-		static uint8_t v = 91;
-		v += v << 2;
-		++v;
-		static uint8_t m = 123;
+		v_ += v_ << 2;
+		++v_;
 		uint8_t n = 0;
-		if(m & 0x02) n = 1;
-		if(m & 0x40) n ^= 1;
-		m += m;
-		if(n == 0) ++m;
-		return v ^ m;
+		if(m_ & 0x02) n = 1;
+		if(m_ & 0x40) n ^= 1;
+		m_ += m_;
+		if(n == 0) ++m_;
+		return v_ ^ m_;
 	}
 
 
@@ -103,9 +110,9 @@ namespace app {
 	}
 
 	// 消去ラインの確認
-	char tetris::line_up_map_() const
+	char tetris::line_up_map_(char sy) const
 	{
-		for(char y = 15; y >= 0; --y) {
+		for(char y = sy; y >= 0; --y) {
 			if(bitmap_.get_line(y) == 0x3ff) {
 				return y;
 			}
@@ -114,9 +121,240 @@ namespace app {
 	}
 
 
-	void game_()
+	void tetris::task_game_()
 	{
+		const system::switch_input& swi = task_.at_switch();
+		position p = block_pos_;
+		if(swi.get_positive() & system::switch_input::bits::LEFT_UP) {
+			--p.x ;
+		}
+		if(swi.get_positive() & system::switch_input::bits::RIGHT_UP) {
+			++p.x;
+		}
 
+		char an = angle_;
+		if(swi.get_positive() & system::switch_input::bits::RIGHT_DOWN) {
+			++an;
+			an &= 3;
+		}
+
+		bool bd = false;
+		if(swi.get_level() & system::switch_input::bits::LEFT_DOWN) {
+			bd = true;
+		}
+
+		// 消去ブロック
+		char y = line_up_map_();
+		if(y >= 0) {
+			count_ = 60;
+			mode_ = mode::blink;
+			return;
+		}
+
+		if(bd) {
+			v_pos_ += 2048;
+		} else {
+			v_pos_ += v_spd_;
+		}
+		if(v_pos_ >= 4096) {
+			v_pos_ = 0;
+			++p.y;
+		}
+
+		block bk;
+		// 位置の左右クリップ
+		rotate_(blocks_[block_idx_], angle_, bk);
+		if(clip_x_(p, bk) || scan_map_(p, bk)) {
+			p.x = block_pos_.x;
+		} else {
+			if(block_pos_.x != p.x) {
+				task_.at_music().request(sound::music::id::tetris_move, 1);
+			}
+			block_pos_.x = p.x;
+		}
+
+		// 回転の左右クリップ
+		rotate_(blocks_[block_idx_], an, bk);
+		if(clip_x_(p, bk)) {
+			bk = blocks_[block_idx_];
+		} else {
+			if(angle_ != an) {
+				task_.at_music().request(sound::music::id::tetris_rot, 1);
+			}
+			angle_ = an;
+		}
+
+		bool bend = false;
+
+		// 底？
+		if(clip_y_(p, bk)) {
+			p.y = block_pos_.y;
+			set_block_(p, bk);
+			bend = true;
+		}
+
+		// 積みブロック検査
+		if(scan_map_(p, bk)) {
+			p.y = block_pos_.y;
+			set_block_(p, bk);
+			bend = true;
+		}
+
+		// 新規ブロック発生
+		if(bend) {
+			score_ += score::block_fall;
+			if(bd) score_ += score::block_fall_quick;
+			task_.at_music().request(sound::music::id::tetris_fall, 1);
+			v_pos_ = 0;
+			block_idx_ = rand_() % tetris_blocks_;
+			v_spd_ += 1;
+			if(v_spd_ >= 1024) v_spd_ = 1024;
+			block_pos_.x = 5;	// 初期位置
+			block_pos_.y = -2;
+			angle_ = 0;
+		} else {
+			block_pos_.y = p.y;
+		}
+
+		// ゲーム終了判定
+		if(bitmap_.get_line(0)) {
+			mode_ = mode::over;
+			count_ = 120 + 60;
+		}
+
+		// フレームの描画
+		task_.at_monograph().line(offset_x_ - 1, 0, offset_x_ - 1, 15, 1);
+		task_.at_monograph().line(offset_x_ + tetris_width_, 0,
+			offset_x_ + tetris_width_, 15, 1);
+
+		// 積みブロックの描画
+		render_block_(offset_x_);
+
+		// 落下ブロックの描画
+		if(!bend) {
+			position pp(p.x + offset_x_, p.y);
+			draw_block_(pp, bk);
+		}
+	}
+
+
+	void tetris::task_blink_()
+	{
+		char y = 15;
+		char tmp[4];
+		uint8_t dc = 0;
+		while(1) {
+			y = line_up_map_(y);
+			if(y >= 0) {
+				tmp[dc] = y;
+				++dc;
+				if(dc >= 4) break;
+				--y;
+			} else {
+				break;
+			}
+		}
+
+		// フレームの描画
+		task_.at_monograph().line(offset_x_ - 1, 0, offset_x_ - 1, 15, 1);
+		task_.at_monograph().line(offset_x_ + tetris_width_, 0,
+			offset_x_ + tetris_width_, 15, 1);
+
+		// 積みブロックの描画
+		render_block_(offset_x_);
+
+		// 消去ラインアニメーション
+		if(count_) {
+			if((count_ % 10) > 4) {
+				for(uint8_t i = 0; i < dc; ++i) {
+					task_.at_monograph().line(offset_x_, tmp[i],
+						offset_x_ + tetris_width_ - 1, tmp[i], 0);
+				}
+			}
+			--count_;
+		} else {
+			for(uint8_t i = 0; i < dc; ++i) {
+				bitmap_.erase_line(tmp[i]);
+				score_ += score::line_erase;
+			}
+			mode_ = mode::game;
+			task_.at_music().request(sound::music::id::tetris_erase, 1);
+		}
+	}
+
+
+	void tetris::task_over_()
+	{
+		if(count_) {
+			--count_;
+		} else {
+			mode_ = mode::score;
+			count_ = 128;
+		}			
+
+		if(count_ > 60) {
+			if((count_ % 30) >= 15) {
+				return;
+			}
+		}
+		// フレームの描画
+		task_.at_monograph().line(offset_x_ - 1, 0, offset_x_ - 1, 15, 1);
+		task_.at_monograph().line(offset_x_ + tetris_width_, 0,
+			offset_x_ + tetris_width_, 15, 1);
+
+		// 積みブロックの描画
+		render_block_(offset_x_);
+
+		if(count_ <= 60) {
+			uint8_t n = (60 - count_) / 8;
+			for(uint8_t h = 0; h < n; ++h) {
+				task_.at_monograph().line(0, h, 15, h, 1);
+				task_.at_monograph().line(0, 15 - h, 15, 15 - h, 1);
+			}
+		}
+	}
+
+
+	void tetris::task_score_()
+	{
+		uint16_t sc = score_;
+		int8_t y = 5;
+		if(sc >= 10000) {
+			y = 2 + 7;
+		}
+		task_.at_draw().draw_3x5(13, y, sc % 10);
+		sc /= 10;
+		task_.at_draw().draw_3x5(9,  y, sc % 10);
+		sc /= 10;
+		task_.at_draw().draw_3x5(5,  y, sc % 10);
+		sc /= 10;
+		task_.at_draw().draw_3x5(1,  y, sc % 10);
+		if(sc >= 10000) {
+			y = 2;
+			sc /= 10;
+			task_.at_draw().draw_3x5(9,  y, sc % 10);
+			sc /= 10;
+			task_.at_draw().draw_3x5(5,  y, sc % 10);
+		}
+
+#if 0
+		{
+			randmize_((score_ % 10) * 67, (score_ / 10) * 27);
+			for(uint8_t y = 0; y < 16; ++y) {
+				for(uint8_t x = 0; x < 16; ++y) {
+					if(count_ < (rand_() & 127)) {
+						task_.at_monograph().point_reset(x, y);
+					}
+				}
+			}
+			if(count_) --count_;
+		}
+#endif
+
+		const system::switch_input& swi = task_.at_switch();
+		if(swi.get_positive()) {
+			task_.start<menu>();
+		}
 	}
 
 
@@ -179,121 +417,14 @@ namespace app {
 	//-----------------------------------------------------------------//
 	void tetris::service()
 	{
-		const system::switch_input& swi = task_.at_switch();
-		char ofsx = 3;
-		char width = 10;
-		position p = block_pos_;
-		if(swi.get_positive() & system::switch_input::bits::LEFT_UP) {
-			--p.x ;
-		}
-		if(swi.get_positive() & system::switch_input::bits::RIGHT_UP) {
-			++p.x;
-		}
-
-		char an = angle_;
-		if(swi.get_positive() & system::switch_input::bits::RIGHT_DOWN) {
-			++an;
-			an &= 3;
-		}
-
-		bool bd = false;
-		if(swi.get_level() & system::switch_input::bits::LEFT_DOWN) {
-			bd = true;
-		}
-
-		// 消去ラインアニメーション、自由落下
-		if(del_delay_) {
-			--del_delay_;
-//			bitmap_.erase_line(del_lines_.get());
-		} else {
-			char y = line_up_map_();
-			if(y >= 0) {
-				bitmap_.erase_line(y);
-				score_ += score::line_erase;
-				task_.at_music().request(sound::music::id::tetris_erase, 1);
-			}
-
-			if(bd) {
-				v_pos_ += 2048;
-			} else {
-				v_pos_ += v_spd_;
-			}
-			if(v_pos_ >= 4096) {
-				v_pos_ = 0;
-				++p.y;
-			}
-		}
-
-		block bk;
-		// 位置の左右クリップ
-		rotate_(blocks_[block_idx_], angle_, bk);
-		if(clip_x_(p, bk) || scan_map_(p, bk)) {
-			p.x = block_pos_.x;
-		} else {
-			if(block_pos_.x != p.x) {
-				task_.at_music().request(sound::music::id::tetris_move, 1);
-			}
-			block_pos_.x = p.x;
-		}
-
-		// 回転の左右クリップ
-		rotate_(blocks_[block_idx_], an, bk);
-		if(clip_x_(p, bk)) {
-			bk = blocks_[block_idx_];
-		} else {
-			if(angle_ != an) {
-				task_.at_music().request(sound::music::id::tetris_rot, 1);
-			}
-			angle_ = an;
-		}
-
-		bool bend = false;
-
-		// 底？
-		if(clip_y_(p, bk)) {
-			p.y = block_pos_.y;
-			set_block_(p, bk);
-			bend = true;
-		}
-
-		// 積みブロック検査
-		if(scan_map_(p, bk)) {
-			p.y = block_pos_.y;
-			set_block_(p, bk);
-			bend = true;
-		}
-
-		// 新規ブロック発生
-		if(bend) {
-			score_ += score::block_fall;
-			if(bd) score_ += score::block_fall_quick;
-			task_.at_music().request(sound::music::id::tetris_fall, 1);
-			v_pos_ = 0;
-			block_idx_ = rand_() % tetris_blocks_;
-			v_spd_ += 1;
-			if(v_spd_ >= 1024) v_spd_ = 1024;
-			block_pos_.x = 5;	// 初期位置
-			block_pos_.y = -2;
-			angle_ = 0;
-		} else {
-			block_pos_.y = p.y;
-		}
-
-		// ゲーム終了判定
-		if(bitmap_.get_line(0)) {
-			gameover_ = 120;
-		}
-
-		// フレームの描画
-		task_.at_monograph().line(ofsx - 1, 0, ofsx - 1, 15, 1);
-		task_.at_monograph().line(ofsx + width, 0, ofsx + width, 15, 1);
-
-		// 積みブロックの描画
-		render_block_(ofsx);
-
-		if(!bend) {
-			position pp(p.x + ofsx, p.y);
-			draw_block_(pp, bk);
+		if(mode_ == mode::game) {
+			task_game_();
+		} else if(mode_ == mode::blink) {
+			task_blink_();
+		} else if(mode_ == mode::over) {
+			task_over_();
+		} else if(mode_ == mode::score) {
+			task_score_();
 		}
 	}
 

@@ -29,32 +29,23 @@ namespace app {
 	//-----------------------------------------------------------------//
 	void menu::service()
 	{
-#if 0
-		if(frame_ >= 64) {
-///			task_.start<tetris>();
-		}
-		const system::switch_input& swi = task_.at_switch();
-		if(swi.get_positive() & system::switch_input::bits::RIGHT_DOWN) {
-			task_.at_psound().play_P(music_);
-		}
-
-		task_.at_draw().draw_3x5(0, 0, 0);
-		task_.at_draw().draw_3x5(4, 0, 1);
-		task_.at_draw().draw_3x5(8, 0, 2);
-		task_.at_draw().draw_3x5(12, 0, 3);
-
-		task_.at_draw().draw_7x10(0, 6, 9);
-		task_.at_draw().draw_7x10(8, 6, 1);
-#endif
 		if(goto_) {
 			--goto_;
 			if(goto_ == 0) {
-				if(icon_no_ == 0) task_.start<ktimer>();
-				else if(icon_no_ == 1) task_.start<tetris>();
-				else if(icon_no_ == 2) task_.start<timer>();
+				if(icon_no_ == 0 || icon_no_ == 1) {
+					if(icon_no_ == 0) task_.set_share(0);
+					else task_.set_share(kt_min_);
+					task_.start<ktimer>();
+				} else if(icon_no_ == 2) task_.start<tetris>();
+				else if(icon_no_ == 3) task_.start<timer>();
 			}
 			if((goto_ % 12) < 5) {
-				task_.at_draw().draw_icon(0, 0, icon_no_);
+				uint8_t no = icon_no_;
+				if(icon_no_ >= 1) --no;
+				task_.at_draw().draw_icon(0, 0, no);
+				if(icon_no_ == 1) {
+					task_.at_draw().draw_3x5(2, 5, kt_min_);
+				}
 			}
 			return;
 		}
@@ -62,7 +53,7 @@ namespace app {
 		const system::switch_input& swi = task_.at_switch();
 		int8_t no = icon_no_;
 		if(swi.get_positive() & system::switch_input::bits::RIGHT_UP) {
-			if(icon_no_ < 2) {
+			if(icon_no_ < 3) {
 				++icon_no_;
 				task_.at_music().request(sound::music::id::tetris_move, 1);
 			}
@@ -99,11 +90,24 @@ namespace app {
 		}
 
 		task_.at_draw().draw_icon((pos_ >> 16) + 0,  0, 0);
-		task_.at_draw().draw_icon((pos_ >> 16) + 16, 0, 1);
-		task_.at_draw().draw_icon((pos_ >> 16) + 32, 0, 2);
+		task_.at_draw().draw_icon((pos_ >> 16) + 16, 0, 0);
+		task_.at_draw().draw_icon((pos_ >> 16) + 32, 0, 1);
+		task_.at_draw().draw_icon((pos_ >> 16) + 48, 0, 2);
+
+		if(icon_no_ == 1) {
+			if(swi.get_positive() & system::switch_input::bits::LEFT_DOWN) {
+				++kt_min_;
+				task_.at_music().request(sound::music::id::count_up, 1);
+				if(kt_min_ > 5) {
+					kt_min_ = 3;
+				}
+			}
+		}
+
+		task_.at_draw().draw_3x5((pos_ >> 16) + 16 + 2, 5, kt_min_);
 
 		if(swi.get_positive() & system::switch_input::bits::RIGHT_DOWN) {
-			goto_ = 60;	// 1.0 sec.
+			goto_ = 30;	// 0.5 sec.
 			task_.at_music().request(sound::music::id::collect, 1);
 		}
 	}

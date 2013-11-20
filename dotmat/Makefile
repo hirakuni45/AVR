@@ -184,16 +184,16 @@ tarball:
 # DO NOT DELETE
 
 mainloop.o: mainloop.hpp ledout.hpp monograph.hpp switch.hpp psound.hpp
-mainloop.o: menu.hpp task.hpp i_task.hpp dm_draw.hpp
+mainloop.o: menu.hpp task.hpp i_task.hpp dm_draw.hpp music.hpp
 monograph.o: monograph.hpp
 dm_draw.o: dm_draw.hpp monograph.hpp font3x5.h font7x10.h icon.h
 psound.o: psound.hpp
 music.o: music.hpp psound.hpp
 menu.o: menu.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-menu.o: dm_draw.hpp ktimer.hpp tetris.hpp timer.hpp
+menu.o: dm_draw.hpp music.hpp ktimer.hpp tetris.hpp timer.hpp
 tetris.o: tetris.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-tetris.o: dm_draw.hpp
+tetris.o: dm_draw.hpp music.hpp menu.hpp
 ktimer.o: ktimer.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-ktimer.o: dm_draw.hpp menu.hpp
+ktimer.o: dm_draw.hpp music.hpp menu.hpp
 timer.o: timer.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-timer.o: dm_draw.hpp menu.hpp
+timer.o: dm_draw.hpp music.hpp menu.hpp

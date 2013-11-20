@@ -34,6 +34,7 @@ namespace app {
 		uint16_t	counter_;
 		uint8_t		sec_;
 		uint8_t		frame_;
+		bool		pause_;
 
 		void draw_time_(uint16_t cnt);
 		void setting_();
@@ -47,7 +48,7 @@ namespace app {
 		//-----------------------------------------------------------------//
 		ktimer(task& t) : task_(t),
 			mode_(mode::setting), jump_(0), acc_(0), down_count_(0), counter_(0),
-			sec_(0), frame_(0) { }
+			sec_(0), frame_(0), pause_(false) { }
 
 
 		//-----------------------------------------------------------------//

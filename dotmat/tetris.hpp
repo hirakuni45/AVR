@@ -32,6 +32,8 @@ namespace app {
 
 		///< テトリスブロック種
 		static const uint8_t 	tetris_blocks_ = 7;
+		static const char offset_x_ = 3;
+		static const char tetris_width_ = 10;
 
 		struct position {
 			char	x;
@@ -76,33 +78,33 @@ namespace app {
 			}
 			void erase_line(char y) {
 				if(y < 0 || y >= 16) return;
-				for(uint8_t i = y; i > 1; --i) {
+				uint8_t i = y;
+				while(i > 0) {
 					bits_[i] = bits_[i - 1];
+					--i;
 				}
 				bits_[0] = 0;
 			}
 		};
 		bitmap	bitmap_;
 
-		struct flush_line {
-			char	ys_[4];
-			flush_line() {
-				for(uint8_t i = 0; i < 4; ++i) ys_[i] = -1;
-			}
-			void set(char y) {
-				for(uint8_t i = 0; i < 4; ++i) {
-					if(ys_[i] < 0) {
-						ys_[i] = y;
-						return;
-					}
-				}
-			}
+		//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+		/*!
+			@brief	ゲーム・モード
+		*/
+		//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+		struct mode {
+			enum type {
+				game,	///< 通常ゲーム
+				blink,	///< 消去ブロック点滅
+				over,	///< ゲーム終了
+				score,	///< スコア表示
+			};
 		};
-		flush_line	flush_line_;
-		uint16_t	del_delay_;
+		mode::type	mode_;
+		uint8_t		count_;
 
 		uint16_t	score_;
-		uint8_t		gameover_;
 
 		bool clip_x_(const position& pos, const block& bck);
 		bool clip_y_(const position& pos, const block& bck);
@@ -111,9 +113,13 @@ namespace app {
 		bool scan_map_(const position& pos, const block& in);
 		void set_block_(const position& pos, const block& in);
 		void render_block_(char ofsx) const;
-		char line_up_map_() const;
+		char line_up_map_(char sy = 15) const;
 		void line_fill_anime_();
 
+		void task_game_();
+		void task_blink_();
+		void task_over_();
+		void task_score_();
 	public:
 		//-----------------------------------------------------------------//
 		/*!
@@ -122,7 +128,7 @@ namespace app {
 		//-----------------------------------------------------------------//
 		tetris(task& t) : task_(t), block_pos_(0, 0), v_pos_(0), v_spd_(0),
 			block_idx_(0), angle_(0),
-			del_delay_(0), score_(0), gameover_(0) { }
+			mode_(mode::game), count_(0), score_(0) { }
 
 
 		//-----------------------------------------------------------------//

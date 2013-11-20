@@ -108,7 +108,13 @@ namespace app {
 
 	void ktimer::count_()
 	{
-		if(counter_) {
+		const system::switch_input& swi = task_.at_switch();
+		if(swi.get_positive() & system::switch_input::bits::RIGHT_DOWN) {
+			pause_ = !pause_;
+			task_.at_music().request(sound::music::id::tetris_rot, 1);
+		}
+
+		if(!pause_ && counter_) {
 			if(sec_) {
 				--sec_;
 			} else {
@@ -123,7 +129,6 @@ namespace app {
 		}
 
 		// 同時押しで、戻る
-		const system::switch_input& swi = task_.at_switch();
 		if(swi.get_level() & system::switch_input::bits::LEFT_DOWN) {
 			if(swi.get_level() & system::switch_input::bits::RIGHT_DOWN) {
 				mode_ = mode::sync_setting;
@@ -131,18 +136,26 @@ namespace app {
 			}
 		}
 
-		int16_t n = (frame_ >> 2) & 7;
-		int16_t x = n;
-		int16_t y = n;
-		int16_t w = 16 - n * 2;
-		int16_t h = 16 - n * 2;
-		if(frame_ & 1) {
-			task_.at_monograph().frame(x, y, w, h, 1);
+		if(!pause_) {
+			int16_t n = (frame_ >> 2) & 7;
+			int16_t x = n;
+			int16_t y = n;
+			int16_t w = 16 - n * 2;
+			int16_t h = 16 - n * 2;
+			if(frame_ & 1) {
+				task_.at_monograph().frame(x, y, w, h, 1);
+			}
 		}
 		++frame_;
 
-		draw_time_(counter_);
+		bool draw = true;
+		if(pause_) {
+			if((frame_ & 0x1f) < 10) draw = false;
+		}
+
+		if(draw) draw_time_(counter_);
 	}
+
 
 	void ktimer::blink_()
 	{
@@ -169,6 +182,9 @@ namespace app {
 	//-----------------------------------------------------------------//
 	void ktimer::init()
 	{
+		if(task_.get_share()) {
+			down_count_ = static_cast<uint16_t>(task_.get_share()) * 60;
+		}
 	}
 
 
