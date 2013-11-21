@@ -6,6 +6,7 @@
 */
 //=====================================================================//
 #include "task.hpp"
+#include "twi.hpp"
 
 namespace app {
 
@@ -17,13 +18,31 @@ namespace app {
 	class timer : public i_task {
 		task&	task_;
 
+		struct mode {
+			enum type {
+				time,			///< 時間表示
+				date,			///< 日付表示
+				setting,		///< 時間設定
+			};
+		};
+
+		mode::type	mode_;
+
+		uint32_t	time_;
+
+		device::twi	twi_;
+
+		uint32_t get_time_();
+		void draw_date_(int16_t ofs, uint32_t cnt);
+		void draw_time_(int16_t ofs, uint32_t cnt);
 	public:
 		//-----------------------------------------------------------------//
 		/*!
 			@brief	コンストラクター
 		*/
 		//-----------------------------------------------------------------//
-		timer(task& t) : task_(t) { }
+		timer(task& t) : task_(t),
+			mode_(mode::time), time_(0) { }
 
 
 		//-----------------------------------------------------------------//

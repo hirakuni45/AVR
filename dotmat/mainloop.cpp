@@ -13,6 +13,8 @@
 			X-decoder-b(138:B):		PC1   @n
 			X-decoder-c(138:C):		PC2   @n
 			X-decoder-d(138:G,/G):	PC3   @n
+			SDA(I2C RTC DS1371)     PC4   @n
+			SCL(I2C RTC DS1371)     PC5   @n
 			/RESET:					PC6   @n
 			Y-driver data hi:		PD0   @n
 									PD1   @n
@@ -34,6 +36,7 @@
 #include "psound.hpp"
 #include "menu.hpp"
 #include "task.hpp"
+#include "twi.hpp"
 
 //-----------------------------------------------------------------//
 /*!

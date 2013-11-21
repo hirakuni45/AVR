@@ -25,6 +25,8 @@ namespace app {
 		task_.at_draw().draw_7x10(9, 6, sec % 10);
 	}
 
+
+
 	void ktimer::setting_()
 	{
 		const system::switch_input& swi = task_.at_switch();
