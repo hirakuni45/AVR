@@ -7,6 +7,7 @@
 //=====================================================================//
 #include "task.hpp"
 #include "twi.hpp"
+#include "time.h"
 
 namespace app {
 
@@ -28,21 +29,29 @@ namespace app {
 
 		mode::type	mode_;
 
-		uint32_t	time_;
+		int32_t		speed_;
+		int32_t		pos_;
+
+		int8_t		page_;
+		uint16_t	frame_;
+		bool		dsp_date_;
+
+		time_t		time_;
 
 		device::twi	twi_;
 
 		uint32_t get_time_();
-		void draw_date_(int16_t ofs, uint32_t cnt);
-		void draw_time_(int16_t ofs, uint32_t cnt);
+		void draw_date_(int16_t ofs, const tm* t);
+		void draw_time_(int16_t ofs, const tm* t);
 	public:
 		//-----------------------------------------------------------------//
 		/*!
 			@brief	コンストラクター
 		*/
 		//-----------------------------------------------------------------//
-		timer(task& t) : task_(t),
-			mode_(mode::time), time_(0) { }
+		timer(task& t) : task_(t), mode_(mode::time),
+			speed_(0), pos_(0), page_(0), frame_(0), dsp_date_(true),
+			time_(0) { }
 
 
 		//-----------------------------------------------------------------//

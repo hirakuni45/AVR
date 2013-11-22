@@ -3,7 +3,7 @@
 #
 TARGET		=	dotmat
 
-CSOURCES	=
+CSOURCES	=	time.c
 PSOURCES	=	mainloop.cpp \
 				monograph.cpp \
 				dm_draw.cpp \
@@ -16,7 +16,7 @@ PSOURCES	=	mainloop.cpp \
 
 ASOURCES	=
 
-MCU_TARGET	=	atmega168p
+MCU_TARGET	=	atmega328p
 
 # OPTIMIZE	= -Os -mcall-prologues
 OPTIMIZE	= -O2 -mcall-prologues
@@ -124,6 +124,7 @@ pdf: $(TARGET).pdf
 read_fuse:
 	hidspx -ph -d4 -Rf
 
+# low を先に書く
 write_fuse_low:
 	hidspx -ph -d4 -FL11100110
 
@@ -183,6 +184,7 @@ tarball:
 
 # DO NOT DELETE
 
+time.o: time.h
 mainloop.o: mainloop.hpp ledout.hpp monograph.hpp switch.hpp psound.hpp
 mainloop.o: menu.hpp task.hpp i_task.hpp dm_draw.hpp music.hpp twi.hpp
 monograph.o: monograph.hpp
