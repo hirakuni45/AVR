@@ -6,8 +6,6 @@
 */
 //=====================================================================//
 #include "task.hpp"
-#include "twi.hpp"
-#include "time.h"
 
 namespace app {
 
@@ -21,9 +19,11 @@ namespace app {
 
 		struct mode {
 			enum type {
-				time,			///< 時間表示
-				date,			///< 日付表示
-				setting,		///< 時間設定
+				display,		///< 時間日付表示
+				setting_y,		///< 年設定
+				setting_md,		///< 月日設定
+				setting_t,		///< 時間設定
+				ret_menu,		///< メニューに戻る
 			};
 		};
 
@@ -33,25 +33,30 @@ namespace app {
 		int32_t		pos_;
 
 		int8_t		page_;
-		uint16_t	frame_;
-		bool		dsp_date_;
 
 		time_t		time_;
 
-		device::twi	twi_;
+		uint8_t		set_count_;
+		uint8_t		set_pos_;
 
 		uint32_t get_time_();
+		void draw_year_(int16_t ofs, const tm* t);
 		void draw_date_(int16_t ofs, const tm* t);
 		void draw_time_(int16_t ofs, const tm* t);
+		void display_();
+		void setting_y_();
+		void setting_md_();
+		void setting_t_();
 	public:
 		//-----------------------------------------------------------------//
 		/*!
 			@brief	コンストラクター
 		*/
 		//-----------------------------------------------------------------//
-		timer(task& t) : task_(t), mode_(mode::time),
-			speed_(0), pos_(0), page_(0), frame_(0), dsp_date_(true),
-			time_(0) { }
+		timer(task& t) : task_(t), mode_(mode::display),
+			speed_(0), pos_(0), page_(0),
+			time_(0),
+			set_count_(0), set_pos_(0) { }
 
 
 		//-----------------------------------------------------------------//

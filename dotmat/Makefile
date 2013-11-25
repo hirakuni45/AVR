@@ -152,6 +152,34 @@ create_bitmap:
 	bmc -text -offset  9*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
 	bmc -text -offset 10*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
 
+	bmc -text -offset  0*8,3*8 -size 4,5 images/matrix_font.png font4x5.h
+	bmc -text -offset  1*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  2*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  3*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  4*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  5*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  6*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  7*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  8*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  9*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset 10*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset 11*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset 14*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset 15*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  0*8,4*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  1*8,4*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  2*8,4*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  4*8,4*8 -size 4,5 images/matrix_font.png -append font4x5.h
+	bmc -text -offset  9*8,4*8 -size 4,5 images/matrix_font.png -append font4x5.h
+
+	bmc -text -offset 12*8,3*8 -size 5,5 images/matrix_font.png font5x5.h
+	bmc -text -offset 13*8,3*8 -size 5,5 images/matrix_font.png -append font5x5.h
+	bmc -text -offset  3*8,4*8 -size 5,5 images/matrix_font.png -append font5x5.h
+	bmc -text -offset  5*8,4*8 -size 5,5 images/matrix_font.png -append font5x5.h
+	bmc -text -offset  6*8,4*8 -size 5,5 images/matrix_font.png -append font5x5.h
+	bmc -text -offset  7*8,4*8 -size 5,5 images/matrix_font.png -append font5x5.h
+	bmc -text -offset  8*8,4*8 -size 5,5 images/matrix_font.png -append font5x5.h
+
 	bmc -text -offset  0*8,8 -size 7,10 images/matrix_font.png font7x10.h
 	bmc -text -offset  1*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
 	bmc -text -offset  2*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
@@ -186,16 +214,19 @@ tarball:
 
 time.o: time.h
 mainloop.o: mainloop.hpp ledout.hpp monograph.hpp switch.hpp psound.hpp
-mainloop.o: menu.hpp task.hpp i_task.hpp dm_draw.hpp music.hpp twi.hpp
+mainloop.o: menu.hpp task.hpp i_task.hpp dm_draw.hpp music.hpp ds1370_io.hpp
+mainloop.o: twi.hpp time.h
 monograph.o: monograph.hpp
-dm_draw.o: dm_draw.hpp monograph.hpp font3x5.h font7x10.h icon.h
+dm_draw.o: dm_draw.hpp monograph.hpp font3x5.h font4x5.h font5x5.h font7x10.h
+dm_draw.o: icon.h
 psound.o: psound.hpp
 music.o: music.hpp psound.hpp
 menu.o: menu.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-menu.o: dm_draw.hpp music.hpp ktimer.hpp tetris.hpp timer.hpp twi.hpp
+menu.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h ktimer.hpp
+menu.o: tetris.hpp timer.hpp
 tetris.o: tetris.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-tetris.o: dm_draw.hpp music.hpp menu.hpp
+tetris.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h menu.hpp
 ktimer.o: ktimer.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-ktimer.o: dm_draw.hpp music.hpp menu.hpp
+ktimer.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h menu.hpp
 timer.o: timer.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-timer.o: dm_draw.hpp music.hpp twi.hpp menu.hpp
+timer.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h menu.hpp

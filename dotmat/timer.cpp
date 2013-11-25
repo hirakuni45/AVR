@@ -9,52 +9,50 @@
 
 namespace app {
 
-	// RTC から時間（秒）を読み出す
-	time_t timer::get_time_()
-	{
-		uint8_t tmp[4];
-		tmp[0] = 0;
-		twi_.send(tmp, 1);	// set read address
-		twi_.recv(&tmp[0], 1);
-		twi_.recv(&tmp[1], 1);
-		twi_.recv(&tmp[2], 1);
-		twi_.recv(&tmp[3], 1);
+	static const char week_str_[] PROGMEM = {
+		'S', 'U', 'N',
+		'M', 'O', 'N',
+		'T', 'U', 'E',
+		'W', 'E', 'D',
+		'T', 'H', 'U',
+		'F', 'R', 'I',
+		'S', 'A', 'T'
+	};
 
-		time_t t = tmp[0] | (static_cast<time_t>(tmp[1]) << 8)
-			| (static_cast<time_t>(tmp[2]) << 16)
-			| (static_cast<time_t>(tmp[3]) << 24);
-		return t;
+
+	void timer::draw_year_(int16_t ofs, const tm* t)
+	{
+		uint16_t y = t->tm_year + 1900;
+		task_.at_draw().draw_3x5(13, ofs + 5, y % 10);
+		y /= 10;
+		task_.at_draw().draw_3x5( 9, ofs + 5, y % 10);
+		y /= 10;
+		task_.at_draw().draw_3x5( 5, ofs + 5, y % 10);
+		y /= 10;
+		task_.at_draw().draw_3x5( 1, ofs + 5, y % 10);
 	}
+
 
 	void timer::draw_date_(int16_t ofs, const tm* t)
 	{
-		uint16_t y = t->tm_year + 1900;
-		task_.at_draw().draw_3x5(13, ofs + 0, y % 10);
-		y /= 10;
-		task_.at_draw().draw_3x5( 9, ofs + 0, y % 10);
-		y /= 10;
-		task_.at_draw().draw_3x5( 5, ofs + 0, y % 10);
-		y /= 10;
-		task_.at_draw().draw_3x5( 1, ofs + 0, y % 10);
+		uint8_t m = t->tm_mon + 1;
+		if(m / 10) task_.at_draw().draw_3x5( 0, ofs + 2, m / 10);
+		task_.at_draw().draw_3x5( 4, ofs + 2, m % 10);
 
-		++frame_;
-		if(frame_ >= (60 * 15)) {
-			frame_ = 0;
-			dsp_date_ = !dsp_date_;
-		}
+		if(t->tm_mday / 10) task_.at_draw().draw_3x5( 9, ofs + 2, t->tm_mday / 10);
+		task_.at_draw().draw_3x5(13, ofs + 2, t->tm_mday % 10);
 
-		if(dsp_date_) {
-			uint8_t m = t->tm_mon + 1;
-			if(m / 10) task_.at_draw().draw_3x5( 0, ofs + 8, m / 10);
-			task_.at_draw().draw_3x5( 4, ofs + 8, m % 10);
-
-			if(t->tm_mday / 10) task_.at_draw().draw_3x5( 9, ofs + 8, t->tm_mday / 10);
-			task_.at_draw().draw_3x5(13, ofs + 8, t->tm_mday % 10);
-		} else {
-			// 曜日
-			task_.at_draw().draw_3x5(7, ofs + 8, t->tm_wday);
+		// 曜日
+		short x = 0;
+		const char* p = &week_str_[t->tm_wday * 3];
+		for(uint8_t i = 0; i < 3; ++i) {
+			char ch = pgm_read_byte_near(p);
+			++p;
+			x += task_.at_draw().draw_xx5(x, ofs + 9, ch);
+			x += 1;
 		}
 	}
+
 
 	void timer::draw_time_(int16_t ofs, const tm* t)
 	{
@@ -68,36 +66,14 @@ namespace app {
 	}
 
 
-
-	//-----------------------------------------------------------------//
-	/*!
-		@brief	初期化
-	*/
-	//-----------------------------------------------------------------//
-	void timer::init()
+	void timer::display_()
 	{
-		twi_.init();
-
-		uint8_t tmp[2];
-		tmp[0] = 0x07;		// DS1371 制御レジスター
-		tmp[1] = 0x06;
-		twi_.send(tmp, 2);
-	}
-
-
-	//-----------------------------------------------------------------//
-	/*!
-		@brief	サービス
-	*/
-	//-----------------------------------------------------------------//
-	void timer::service()
-	{
-		time_ = get_time_();
+		time_ = task_.at_rtc().read();
 
 		const system::switch_input& swi = task_.at_switch();
 		int8_t no = page_;
 		if(swi.get_positive() & system::switch_input::bits::LEFT_UP) {
-			if(page_ < 1) {
+			if(page_ < 2) {
 				++page_;
 				task_.at_music().request(sound::music::id::tetris_move, 1);
 			}
@@ -135,8 +111,94 @@ namespace app {
 
 		tm* t = gmtime(&time_);
 
-		draw_date_((pos_ >> 16) +  0, t);
-		draw_time_((pos_ >> 16) + 16, t);
+		draw_year_((pos_ >> 16) +  0, t);
+		draw_date_((pos_ >> 16) + 16, t);
+		draw_time_((pos_ >> 16) + 32, t);
+
+		// 下ボタン同時押しで、戻る
+		if(swi.get_level() == (system::switch_input::bits::LEFT_DOWN
+			| system::switch_input::bits::RIGHT_DOWN)) {
+			mode_ = mode::ret_menu;
+			task_.at_music().request(sound::music::id::tetris_rot, 1);
+		}
+		// 全ボタン同時押しが４秒続く場合
+		if(swi.get_level() == (system::switch_input::bits::LEFT_UP
+			| system::switch_input::bits::RIGHT_UP
+			| system::switch_input::bits::LEFT_DOWN
+			| system::switch_input::bits::RIGHT_DOWN)) {
+			++set_count_;
+			if(set_count_ >= 240) {
+				mode_ = mode::setting_y;
+				set_pos_ = 0;
+			}
+		} else {
+			set_count_ = 0;
+		}
+
+	}
+
+
+	// 年設定
+	void timer::setting_y_()
+	{
+		tm* t = get_tm();
+		draw_year_(0, t);
+	}
+
+
+	// 月日設定
+	void timer::setting_md_()
+	{
+		tm* t = get_tm();
+		draw_date_(0, t);
+	}
+
+
+	// 時間設定
+	void timer::setting_t_()
+	{
+		tm* t = get_tm();
+		draw_time_(0, t);
+	}
+
+
+	//-----------------------------------------------------------------//
+	/*!
+		@brief	初期化
+	*/
+	//-----------------------------------------------------------------//
+	void timer::init()
+	{
+	}
+
+
+	//-----------------------------------------------------------------//
+	/*!
+		@brief	サービス
+	*/
+	//-----------------------------------------------------------------//
+	void timer::service()
+	{
+		if(mode_ == mode::display) {
+			display_();
+		} else if(mode_ == mode::setting_y) {
+			setting_y_();
+		} else if(mode_ == mode::setting_md) {
+			setting_md_();
+		} else if(mode_ == mode::setting_t) {
+			setting_t_();
+		} else if(mode_ == mode::ret_menu) {
+			// ボタンが両方離されたら戻る
+			const system::switch_input& swi = task_.at_switch();
+			if(!(swi.get_level() & system::switch_input::bits::LEFT_DOWN)) {
+				if(!(swi.get_level() & system::switch_input::bits::RIGHT_DOWN)) {
+					task_.start<menu>();
+				}
+			}
+			// Ｘの表示
+			task_.at_monograph().line(0, 0, 15, 15, 1);
+			task_.at_monograph().line(15, 0, 0, 15, 1);
+		}
 	}
 
 

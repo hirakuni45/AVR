@@ -11,6 +11,7 @@
 #include "i_task.hpp"
 #include "dm_draw.hpp"
 #include "music.hpp"
+#include "ds1370_io.hpp"
 
 namespace app {
 
@@ -19,12 +20,17 @@ namespace app {
 		@brief	タスク・クラス
 	*/
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-	class task {
+	struct task {
+		typedef device::ds1371_io	rtc;
+
+	private:
 		system::switch_input	swi_;
 		device::psound			psound_;
 		graphics::monograph		mng_;
 		sound::music			sm_;
 		graphics::dm_draw		dmd_;
+		device::twi				twi_;
+		rtc						rtc_;
 
 		i_task*		task_;
 		i_task*		erase_;
@@ -38,6 +44,7 @@ namespace app {
 		*/
 		//-----------------------------------------------------------------//
 		task() : swi_(), psound_(), mng_(), sm_(psound_), dmd_(mng_),
+			twi_(), rtc_(twi_),
 			task_(0), erase_(0), share_(0) { }
 
 
@@ -59,6 +66,8 @@ namespace app {
 		void init() {
 			psound_.init();
 			mng_.init();
+			twi_.init();
+			rtc_.init();
 		}
 
 
@@ -100,6 +109,14 @@ namespace app {
 		*/
 		//-----------------------------------------------------------------//
 		graphics::dm_draw& at_draw() { return dmd_; }
+
+
+		//-----------------------------------------------------------------//
+		/*!
+			@brief	RTC の参照
+		*/
+		//-----------------------------------------------------------------//
+		rtc& at_rtc() { return rtc_; }
 
 
 		//-----------------------------------------------------------------//
