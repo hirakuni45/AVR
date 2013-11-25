@@ -50,6 +50,35 @@ namespace graphics {
 
 	//-----------------------------------------------------------------//
 	/*!
+		@brief	4x5, 5x5 オブジェクトの幅を返す
+		@param[in]	n	オブジェクト番号
+		@return 横幅
+	*/
+	//-----------------------------------------------------------------//
+	uint8_t dm_draw::get_width_xx5(uint8_t n)
+	{
+		if('A' <= n && n <= 'L') {
+			if(n == 'I') return 3;
+			else return 4;
+		} else if(n == 'M' || n == 'N') {
+			return 5;
+		} else if('O' <= n && n <= 'S') {
+			return 4;
+		} else if(n == 'T') {
+			return 5;
+		} else if('U' == n) {
+			return 4;
+		} else if('V' <= n && n <= 'Y') {
+			return 5;
+		} else if('Z' == n) {
+			return 4;
+		}
+		return 0;
+	}
+
+
+	//-----------------------------------------------------------------//
+	/*!
 		@brief	4x5, 5x5 オブジェクトの描画
 		@param[in]	x	X 位置
 		@param[in]	y	Y 位置

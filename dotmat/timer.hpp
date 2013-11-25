@@ -37,12 +37,15 @@ namespace app {
 		time_t		time_;
 
 		uint8_t		set_count_;
-		uint8_t		set_pos_;
+		uint8_t		frame_count_;
+		int8_t		edit_pos_;
+
+		tm			tm_;
 
 		uint32_t get_time_();
-		void draw_year_(int16_t ofs, const tm* t);
-		void draw_date_(int16_t ofs, const tm* t);
-		void draw_time_(int16_t ofs, const tm* t);
+		void draw_year_(int16_t ofs, uint16_t year);
+		void draw_date_(int16_t ofs, const tm& t);
+		void draw_time_(int16_t ofs, const tm& t);
 		void display_();
 		void setting_y_();
 		void setting_md_();
@@ -56,7 +59,7 @@ namespace app {
 		timer(task& t) : task_(t), mode_(mode::display),
 			speed_(0), pos_(0), page_(0),
 			time_(0),
-			set_count_(0), set_pos_(0) { }
+			set_count_(0), frame_count_(0), edit_pos_(-1) { }
 
 
 		//-----------------------------------------------------------------//
