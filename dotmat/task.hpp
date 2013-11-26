@@ -12,6 +12,7 @@
 #include "dm_draw.hpp"
 #include "music.hpp"
 #include "ds1370_io.hpp"
+#include "eeprom.hpp"
 
 namespace app {
 
@@ -23,15 +24,16 @@ namespace app {
 	struct task {
 		typedef device::ds1371_io	rtc;
 
-	private:
 		system::switch_input	swi_;
 		device::psound			psound_;
 		graphics::monograph		mng_;
-		sound::music			sm_;
-		graphics::dm_draw		dmd_;
+		sound::music			music_;
+		graphics::dm_draw		dm_;
 		device::twi				twi_;
 		rtc						rtc_;
+		device::eeprom			eeprom_;
 
+	private:
 		i_task*		task_;
 		i_task*		erase_;
 
@@ -43,7 +45,7 @@ namespace app {
 			@brief	コンストラクター
 		*/
 		//-----------------------------------------------------------------//
-		task() : swi_(), psound_(), mng_(), sm_(psound_), dmd_(mng_),
+		task() : swi_(), psound_(), mng_(), music_(psound_), dm_(mng_),
 			twi_(), rtc_(twi_),
 			task_(0), erase_(0), share_(0) { }
 
@@ -69,54 +71,6 @@ namespace app {
 			twi_.init();
 			rtc_.init();
 		}
-
-
-		//-----------------------------------------------------------------//
-		/*!
-			@brief	スイッチの参照
-		*/
-		//-----------------------------------------------------------------//
-		system::switch_input& at_switch() { return swi_; }		
-
-
-		//-----------------------------------------------------------------//
-		/*!
-			@brief	パルス・サウンドの参照
-		*/
-		//-----------------------------------------------------------------//
-		device::psound& at_psound() { return psound_; }		
-
-
-		//-----------------------------------------------------------------//
-		/*!
-			@brief	グラフィックスの参照
-		*/
-		//-----------------------------------------------------------------//
-		graphics::monograph& at_monograph() { return mng_; }
-
-
-		//-----------------------------------------------------------------//
-		/*!
-			@brief	ドットマトリックス描画の参照
-		*/
-		//-----------------------------------------------------------------//
-		sound::music& at_music() { return sm_; }
-
-
-		//-----------------------------------------------------------------//
-		/*!
-			@brief	ドットマトリックス描画の参照
-		*/
-		//-----------------------------------------------------------------//
-		graphics::dm_draw& at_draw() { return dmd_; }
-
-
-		//-----------------------------------------------------------------//
-		/*!
-			@brief	RTC の参照
-		*/
-		//-----------------------------------------------------------------//
-		rtc& at_rtc() { return rtc_; }
 
 
 		//-----------------------------------------------------------------//

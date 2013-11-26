@@ -20,6 +20,8 @@ namespace system {
 		uint8_t	positive_;
 		uint8_t	negative_;
 
+		uint8_t	no_touch_;
+
 	public:
 		//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 		/*!
@@ -46,7 +48,7 @@ namespace system {
 			@brief	コンストラクター
 		*/
 		//-----------------------------------------------------------------//
-		switch_input() : level_(0), positive_(0), negative_(0) { }
+		switch_input() : level_(0), positive_(0), negative_(0), no_touch_(0) { }
 
 
 		//-----------------------------------------------------------------//
@@ -59,6 +61,13 @@ namespace system {
 			positive_ =  level & ~level_;
 			negative_ = ~level &  level_;
 			level_ = level;
+			if(level) {
+				no_touch_ = 0;
+			} else {
+				if(no_touch_ < 255) {
+					++no_touch_;
+				}
+			}
 		}
 
 
@@ -87,5 +96,16 @@ namespace system {
 		*/
 		//-----------------------------------------------------------------//
 		uint8_t get_negative() const { return negative_; }
+
+
+		//-----------------------------------------------------------------//
+		/*!
+			@brief	最後にスイッチ操作が行われてからの経過検査
+			@return cnt 時間以上経過していれば「true」
+		*/
+		//-----------------------------------------------------------------//
+		bool last_touch(uint8_t cnt) const {
+			return no_touch_ >= cnt;
+		}
 	};
 }

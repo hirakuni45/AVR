@@ -25,13 +25,13 @@ namespace app {
 		int8_t n = -1;
 		if((frame_count_ & 15) > 5) n = edit_pos_; 
 
-		if(n != 0) task_.at_draw().draw_3x5(13, ofs + 5, year % 10);
+		if(n != 0) task_.dm_.draw_3x5(13, ofs + 5, year % 10);
 		year /= 10;
-		if(n != 1) task_.at_draw().draw_3x5( 9, ofs + 5, year % 10);
+		if(n != 1) task_.dm_.draw_3x5( 9, ofs + 5, year % 10);
 		year /= 10;
-		if(n != 2) task_.at_draw().draw_3x5( 5, ofs + 5, year % 10);
+		if(n != 2) task_.dm_.draw_3x5( 5, ofs + 5, year % 10);
 		year /= 10;
-		if(n != 3) task_.at_draw().draw_3x5( 1, ofs + 5, year % 10);
+		if(n != 3) task_.dm_.draw_3x5( 1, ofs + 5, year % 10);
 	}
 
 
@@ -42,13 +42,13 @@ namespace app {
 
 		uint8_t m = t.tm_mon + 1;
 		if(n != 0) {
-			if(m / 10) task_.at_draw().draw_3x5( 0, ofs + 2, m / 10);
-			task_.at_draw().draw_3x5( 4, ofs + 2, m % 10);
+			if(m / 10) task_.dm_.draw_3x5( 0, ofs + 2, m / 10);
+			task_.dm_.draw_3x5( 4, ofs + 2, m % 10);
 		}
 
 		if(n != 1) {
-			if(t.tm_mday / 10) task_.at_draw().draw_3x5( 9, ofs + 2, t.tm_mday / 10);
-			task_.at_draw().draw_3x5(13, ofs + 2, t.tm_mday % 10);
+			if(t.tm_mday / 10) task_.dm_.draw_3x5( 9, ofs + 2, t.tm_mday / 10);
+			task_.dm_.draw_3x5(13, ofs + 2, t.tm_mday % 10);
 		}
 
 		// 曜日
@@ -58,7 +58,7 @@ namespace app {
 			for(uint8_t i = 0; i < 3; ++i) {
 				uint8_t ch = pgm_read_byte_near(p);
 				++p;
-				w += task_.at_draw().get_width_xx5(ch);
+				w += task_.dm_.get_width_xx5(ch);
 			}
 		}
 		short x = (16 - w) / 2; // センターリング
@@ -66,7 +66,7 @@ namespace app {
 		for(uint8_t i = 0; i < 3; ++i) {
 			uint8_t ch = pgm_read_byte_near(p);
 			++p;
-			x += task_.at_draw().draw_xx5(x, ofs + 9, ch);
+			x += task_.dm_.draw_xx5(x, ofs + 9, ch);
 			x += 1;
 		}
 	}
@@ -77,32 +77,32 @@ namespace app {
 		int8_t n = -1;
 		if((frame_count_ & 15) > 5) n = edit_pos_; 
 
-		if(n != 3) task_.at_draw().draw_3x5( 0, ofs + 0, t.tm_hour / 10);
-		if(n != 2) task_.at_draw().draw_3x5( 4, ofs + 0, t.tm_hour % 10);
-		if(n != 1) task_.at_draw().draw_3x5( 9, ofs + 0, t.tm_min / 10);
-		if(n != 0) task_.at_draw().draw_3x5(13, ofs + 0, t.tm_min % 10);
+		if(n != 3) task_.dm_.draw_3x5( 0, ofs + 0, t.tm_hour / 10);
+		if(n != 2) task_.dm_.draw_3x5( 4, ofs + 0, t.tm_hour % 10);
+		if(n != 1) task_.dm_.draw_3x5( 9, ofs + 0, t.tm_min / 10);
+		if(n != 0) task_.dm_.draw_3x5(13, ofs + 0, t.tm_min % 10);
 
-		if(n != 5) task_.at_draw().draw_7x10(0, ofs + 6, t.tm_sec / 10);
-		if(n != 4) task_.at_draw().draw_7x10(9, ofs + 6, t.tm_sec % 10);
+		if(n != 5) task_.dm_.draw_7x10(0, ofs + 6, t.tm_sec / 10);
+		if(n != 4) task_.dm_.draw_7x10(9, ofs + 6, t.tm_sec % 10);
 	}
 
 
 	void timer::display_()
 	{
-		time_ = task_.at_rtc().read();
+		time_ = task_.rtc_.read();
 
-		const system::switch_input& swi = task_.at_switch();
+		const system::switch_input& swi = task_.swi_;
 		int8_t no = page_;
 		if(swi.get_positive() & system::switch_input::bits::LEFT_UP) {
 			if(page_ < 2) {
 				++page_;
-				task_.at_music().request(sound::music::id::tetris_move, 1);
+				task_.music_.request(sound::music::id::tetris_move, 1);
 			}
 		}
 		if(swi.get_positive() & system::switch_input::bits::LEFT_DOWN) {
 			if(page_) {
 				--page_;
-				task_.at_music().request(sound::music::id::tetris_move, 1);
+				task_.music_.request(sound::music::id::tetris_move, 1);
 			}
 		}
 		if(page_ != no) {
@@ -140,7 +140,7 @@ namespace app {
 		if(swi.get_level() == (system::switch_input::bits::LEFT_DOWN
 			| system::switch_input::bits::RIGHT_DOWN)) {
 			mode_ = mode::ret_menu;
-			task_.at_music().request(sound::music::id::tetris_rot, 1);
+			task_.music_.request(sound::music::id::tetris_rot, 1);
 		}
 		// 全ボタン同時押しが４秒続く場合
 		if(swi.get_level() == (system::switch_input::bits::LEFT_UP
@@ -152,7 +152,7 @@ namespace app {
 				mode_ = mode::setting_y;
 				edit_pos_ = 0;
 				copy_tm(get_tm(), &tm_);
-				task_.at_music().request(sound::music::id::tetris_erase, 1);
+				task_.music_.request(sound::music::id::tetris_erase, 1);
 			}
 		} else {
 			set_count_ = 0;
@@ -178,13 +178,13 @@ namespace app {
 		} else {
 			d = (t / 1000) % 10;
 		}
-		const system::switch_input& swi = task_.at_switch();
+		const system::switch_input& swi = task_.swi_;
 		if(swi.get_positive() & system::switch_input::bits::LEFT_UP) {
-			task_.at_music().request(sound::music::id::tetris_move, 1);
+			task_.music_.request(sound::music::id::tetris_move, 1);
 			++d;
 		}
 		if(swi.get_positive() & system::switch_input::bits::LEFT_DOWN) {
-			task_.at_music().request(sound::music::id::tetris_move, 1);
+			task_.music_.request(sound::music::id::tetris_move, 1);
 			--d;
 		}
 		if(d < 0) d = 9;
@@ -212,12 +212,12 @@ namespace app {
 		tm_.tm_year = t - 1900;
 
 		if(swi.get_positive() & system::switch_input::bits::RIGHT_UP) {
-			task_.at_music().request(sound::music::id::tetris_rot, 1);
+			task_.music_.request(sound::music::id::tetris_rot, 1);
 			if(edit_pos_) --edit_pos_;
 		}
 
 		if(swi.get_positive() & system::switch_input::bits::RIGHT_DOWN) {
-			task_.at_music().request(sound::music::id::tetris_fall, 1);
+			task_.music_.request(sound::music::id::tetris_fall, 1);
 			++edit_pos_;
 			if(edit_pos_ >= 4) {
 				mode_ = mode::setting_md;
@@ -242,13 +242,13 @@ namespace app {
 		} else if(edit_pos_ == 1) {
 			d = tm_.tm_mday;
 		}
-		const system::switch_input& swi = task_.at_switch();
+		const system::switch_input& swi = task_.swi_;
 		if(swi.get_positive() & system::switch_input::bits::LEFT_UP) {
-			task_.at_music().request(sound::music::id::tetris_move, 1);
+			task_.music_.request(sound::music::id::tetris_move, 1);
 			++d;
 		}
 		if(swi.get_positive() & system::switch_input::bits::LEFT_DOWN) {
-			task_.at_music().request(sound::music::id::tetris_move, 1);
+			task_.music_.request(sound::music::id::tetris_move, 1);
 			--d;
 		}
 		if(edit_pos_ == 0) {
@@ -269,12 +269,12 @@ namespace app {
 		}
 
 		if(swi.get_positive() & system::switch_input::bits::RIGHT_UP) {
-			task_.at_music().request(sound::music::id::tetris_rot, 1);
+			task_.music_.request(sound::music::id::tetris_rot, 1);
 			if(edit_pos_) --edit_pos_;
 		}
 
 		if(swi.get_positive() & system::switch_input::bits::RIGHT_DOWN) {
-			task_.at_music().request(sound::music::id::tetris_fall, 1);
+			task_.music_.request(sound::music::id::tetris_fall, 1);
 			++edit_pos_;
 			if(edit_pos_ >= 2) {
 				mode_ = mode::setting_t;
@@ -303,13 +303,13 @@ namespace app {
 		} else {
 			d = tm_.tm_sec / 10;
 		}
-		const system::switch_input& swi = task_.at_switch();
+		const system::switch_input& swi = task_.swi_;
 		if(swi.get_positive() & system::switch_input::bits::LEFT_UP) {
-			task_.at_music().request(sound::music::id::tetris_move, 1);
+			task_.music_.request(sound::music::id::tetris_move, 1);
 			++d;
 		}
 		if(swi.get_positive() & system::switch_input::bits::LEFT_DOWN) {
-			task_.at_music().request(sound::music::id::tetris_move, 1);
+			task_.music_.request(sound::music::id::tetris_move, 1);
 			--d;
 		}
 		if(edit_pos_ == 0) {
@@ -354,19 +354,19 @@ namespace app {
 		}
 
 		if(swi.get_positive() & system::switch_input::bits::RIGHT_UP) {
-			task_.at_music().request(sound::music::id::tetris_rot, 1);
+			task_.music_.request(sound::music::id::tetris_rot, 1);
 			if(edit_pos_) --edit_pos_;
 		}
 
 		if(swi.get_positive() & system::switch_input::bits::RIGHT_DOWN) {
-			task_.at_music().request(sound::music::id::tetris_fall, 1);
+			task_.music_.request(sound::music::id::tetris_fall, 1);
 			++edit_pos_;
 			if(edit_pos_ >= 6) {
 				mode_ = mode::display;
 				edit_pos_ = -1;
 				// 新しい時間を RTC に書く
 				time_t t = mktime(&tm_);
-				task_.at_rtc().write(t);				
+				task_.rtc_.write(t);				
 			}
 		}
 	}
@@ -399,15 +399,15 @@ namespace app {
 			setting_t_();
 		} else if(mode_ == mode::ret_menu) {
 			// ボタンが両方離されたら戻る
-			const system::switch_input& swi = task_.at_switch();
+			const system::switch_input& swi = task_.swi_;
 			if(!(swi.get_level() & system::switch_input::bits::LEFT_DOWN)) {
 				if(!(swi.get_level() & system::switch_input::bits::RIGHT_DOWN)) {
 					task_.start<menu>();
 				}
 			}
 			// Ｘの表示
-			task_.at_monograph().line(0, 0, 15, 15, 1);
-			task_.at_monograph().line(15, 0, 0, 15, 1);
+			task_.mng_.line(0, 0, 15, 15, 1);
+			task_.mng_.line(15, 0, 0, 15, 1);
 		}
 		++frame_count_;
 	}

@@ -129,7 +129,7 @@ write_fuse_low:
 	hidspx -ph -d4 -FL11100110
 
 write_fuse_high:
-	hidspx -ph -d4 -FH11011100
+	hidspx -ph -d4 -FH11010100
 
 ram_size:
 	grep heap_start $(TARGET).map
@@ -215,18 +215,21 @@ tarball:
 time.o: time.h
 mainloop.o: mainloop.hpp ledout.hpp monograph.hpp switch.hpp psound.hpp
 mainloop.o: menu.hpp task.hpp i_task.hpp dm_draw.hpp music.hpp ds1370_io.hpp
-mainloop.o: twi.hpp time.h
+mainloop.o: twi.hpp time.h eeprom.hpp
 monograph.o: monograph.hpp
 dm_draw.o: dm_draw.hpp monograph.hpp font3x5.h font4x5.h font5x5.h font7x10.h
 dm_draw.o: icon.h
 psound.o: psound.hpp
 music.o: music.hpp psound.hpp
 menu.o: menu.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-menu.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h ktimer.hpp
-menu.o: tetris.hpp timer.hpp
+menu.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h eeprom.hpp
+menu.o: ktimer.hpp tetris.hpp timer.hpp
 tetris.o: tetris.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-tetris.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h menu.hpp
+tetris.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h eeprom.hpp
+tetris.o: menu.hpp
 ktimer.o: ktimer.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-ktimer.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h menu.hpp
+ktimer.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h eeprom.hpp
+ktimer.o: menu.hpp
 timer.o: timer.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-timer.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h menu.hpp
+timer.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h eeprom.hpp
+timer.o: menu.hpp

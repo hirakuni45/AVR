@@ -194,13 +194,13 @@ int main()
 	task_.start<app::menu>();	///< メニュー・タスクの登録
 
 	while(1) {
-		graphics::monograph& mng = task_.at_monograph();
+		graphics::monograph& mng = task_.mng_;
 		ledout_.copy(mng.fb());	///< フレームバッファを LED スキャンバッファにコピー
 		mng.clear(0);			///< フレームバッファを消去
 
 		task_.service();		///< 各タスクサービス
 
 		uint8_t sw = sync_system_timer_();	///< フレームの同期とスイッチのサンプリング
-		task_.at_switch().set_level(sw);	///< スイッチの状態を設定
+		task_.swi_.set_level(sw);	///< スイッチの状態を設定
 	}
 }

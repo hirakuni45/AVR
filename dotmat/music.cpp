@@ -157,6 +157,15 @@ namespace sound {
 		device::psound::sound_key::END
 	};
 
+	/// 起動効果音
+	static const uint8_t snd_launch_[] PROGMEM = {
+		device::psound::sound_key::FOR, 3,
+		device::psound::sound_key::A  + 12 * 7, 2,
+		device::psound::sound_key::Q,           1,
+		device::psound::sound_key::BEFORE,
+		device::psound::sound_key::END
+	};
+
 
 	//-----------------------------------------------------------------//
 	/*!
@@ -193,6 +202,9 @@ namespace sound {
 			break;
 		case id::start:
 			p = snd_start_;
+			break;
+		case id::launch:
+			p = snd_launch_;
 			break;
 		case id::bgm_01:
 			p = bgm_01_;

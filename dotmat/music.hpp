@@ -30,6 +30,7 @@ namespace sound {
 				count_up,
 				count_down,
 				start,
+				launch,
 
 				bgm_01,
 			};

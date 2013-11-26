@@ -53,7 +53,7 @@ namespace app {
 	void tetris::draw_block_(const position& pos, const block& bck)
 	{
 		for(unsigned char i = 0; i < 4; ++i) {
-			task_.at_monograph().point_set(pos.x + bck.poss[i].x, pos.y + bck.poss[i].y); 
+			task_.mng_.point_set(pos.x + bck.poss[i].x, pos.y + bck.poss[i].y); 
 		}
 	}
 
@@ -103,7 +103,7 @@ namespace app {
 		for(char y = 0; y < 16; ++y) {
 			for(char x = 0; x < 10; ++x) {
 				if(bitmap_.get(position(x, y))) {
-					task_.at_monograph().point_set(ofsx + x, y); 
+					task_.mng_.point_set(ofsx + x, y); 
 				}
 			}
 		}
@@ -123,7 +123,7 @@ namespace app {
 
 	void tetris::task_game_()
 	{
-		const system::switch_input& swi = task_.at_switch();
+		const system::switch_input& swi = task_.swi_;
 		position p = block_pos_;
 		if(swi.get_positive() & system::switch_input::bits::LEFT_UP) {
 			--p.x ;
@@ -168,7 +168,7 @@ namespace app {
 			p.x = block_pos_.x;
 		} else {
 			if(block_pos_.x != p.x) {
-				task_.at_music().request(sound::music::id::tetris_move, 1);
+				task_.music_.request(sound::music::id::tetris_move, 1);
 			}
 			block_pos_.x = p.x;
 		}
@@ -179,7 +179,7 @@ namespace app {
 			bk = blocks_[block_idx_];
 		} else {
 			if(angle_ != an) {
-				task_.at_music().request(sound::music::id::tetris_rot, 1);
+				task_.music_.request(sound::music::id::tetris_rot, 1);
 			}
 			angle_ = an;
 		}
@@ -204,7 +204,7 @@ namespace app {
 		if(bend) {
 			score_ += score::block_fall;
 			if(bd) score_ += score::block_fall_quick;
-			task_.at_music().request(sound::music::id::tetris_fall, 1);
+			task_.music_.request(sound::music::id::tetris_fall, 1);
 			v_pos_ = 0;
 			block_idx_ = rand_() % tetris_blocks_;
 			v_spd_ += 1;
@@ -223,8 +223,8 @@ namespace app {
 		}
 
 		// フレームの描画
-		task_.at_monograph().line(offset_x_ - 1, 0, offset_x_ - 1, 15, 1);
-		task_.at_monograph().line(offset_x_ + tetris_width_, 0,
+		task_.mng_.line(offset_x_ - 1, 0, offset_x_ - 1, 15, 1);
+		task_.mng_.line(offset_x_ + tetris_width_, 0,
 			offset_x_ + tetris_width_, 15, 1);
 
 		// 積みブロックの描画
@@ -256,8 +256,8 @@ namespace app {
 		}
 
 		// フレームの描画
-		task_.at_monograph().line(offset_x_ - 1, 0, offset_x_ - 1, 15, 1);
-		task_.at_monograph().line(offset_x_ + tetris_width_, 0,
+		task_.mng_.line(offset_x_ - 1, 0, offset_x_ - 1, 15, 1);
+		task_.mng_.line(offset_x_ + tetris_width_, 0,
 			offset_x_ + tetris_width_, 15, 1);
 
 		// 積みブロックの描画
@@ -267,7 +267,7 @@ namespace app {
 		if(count_) {
 			if((count_ % 10) > 4) {
 				for(uint8_t i = 0; i < dc; ++i) {
-					task_.at_monograph().line(offset_x_, tmp[i],
+					task_.mng_.line(offset_x_, tmp[i],
 						offset_x_ + tetris_width_ - 1, tmp[i], 0);
 				}
 			}
@@ -278,7 +278,7 @@ namespace app {
 				score_ += score::line_erase;
 			}
 			mode_ = mode::game;
-			task_.at_music().request(sound::music::id::tetris_erase, 1);
+			task_.music_.request(sound::music::id::tetris_erase, 1);
 		}
 	}
 
@@ -298,8 +298,8 @@ namespace app {
 			}
 		}
 		// フレームの描画
-		task_.at_monograph().line(offset_x_ - 1, 0, offset_x_ - 1, 15, 1);
-		task_.at_monograph().line(offset_x_ + tetris_width_, 0,
+		task_.mng_.line(offset_x_ - 1, 0, offset_x_ - 1, 15, 1);
+		task_.mng_.line(offset_x_ + tetris_width_, 0,
 			offset_x_ + tetris_width_, 15, 1);
 
 		// 積みブロックの描画
@@ -308,8 +308,8 @@ namespace app {
 		if(count_ <= 60) {
 			uint8_t n = (60 - count_) / 8;
 			for(uint8_t h = 0; h < n; ++h) {
-				task_.at_monograph().line(0, h, 15, h, 1);
-				task_.at_monograph().line(0, 15 - h, 15, 15 - h, 1);
+				task_.mng_.line(0, h, 15, h, 1);
+				task_.mng_.line(0, 15 - h, 15, 15 - h, 1);
 			}
 		}
 	}
@@ -322,19 +322,19 @@ namespace app {
 		if(sc >= 10000) {
 			y = 2 + 7;
 		}
-		task_.at_draw().draw_3x5(13, y, sc % 10);
+		task_.dm_.draw_3x5(13, y, sc % 10);
 		sc /= 10;
-		task_.at_draw().draw_3x5(9,  y, sc % 10);
+		task_.dm_.draw_3x5(9,  y, sc % 10);
 		sc /= 10;
-		task_.at_draw().draw_3x5(5,  y, sc % 10);
+		task_.dm_.draw_3x5(5,  y, sc % 10);
 		sc /= 10;
-		task_.at_draw().draw_3x5(1,  y, sc % 10);
+		task_.dm_.draw_3x5(1,  y, sc % 10);
 		if(sc >= 10000) {
 			y = 2;
 			sc /= 10;
-			task_.at_draw().draw_3x5(9,  y, sc % 10);
+			task_.dm_.draw_3x5(9,  y, sc % 10);
 			sc /= 10;
-			task_.at_draw().draw_3x5(5,  y, sc % 10);
+			task_.dm_.draw_3x5(5,  y, sc % 10);
 		}
 
 #if 0
@@ -343,7 +343,7 @@ namespace app {
 			for(uint8_t y = 0; y < 16; ++y) {
 				for(uint8_t x = 0; x < 16; ++y) {
 					if(count_ < (rand_() & 127)) {
-						task_.at_monograph().point_reset(x, y);
+						task_.mng_.point_reset(x, y);
 					}
 				}
 			}
@@ -351,7 +351,7 @@ namespace app {
 		}
 #endif
 
-		const system::switch_input& swi = task_.at_switch();
+		const system::switch_input& swi = task_.swi_;
 		if(swi.get_positive()) {
 			task_.start<menu>();
 		}

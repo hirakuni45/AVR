@@ -13,23 +13,23 @@ namespace app {
 	{
 		uint16_t hor = cnt / 60;
 		uint16_t min = hor % 60;
-		task_.at_draw().draw_3x5( 9, 0, min / 10);
-		task_.at_draw().draw_3x5(13, 0, min % 10);
+		task_.dm_.draw_3x5( 9, 0, min / 10);
+		task_.dm_.draw_3x5(13, 0, min % 10);
 
 		hor /= 60;
-		task_.at_draw().draw_3x5( 1, 0, hor % 10);
-		task_.at_draw().draw_3x5( 5, 0, 10);
+		task_.dm_.draw_3x5( 1, 0, hor % 10);
+		task_.dm_.draw_3x5( 5, 0, 10);
 
 		uint16_t sec = cnt % 60;
-		task_.at_draw().draw_7x10(0, 6, sec / 10);
-		task_.at_draw().draw_7x10(9, 6, sec % 10);
+		task_.dm_.draw_7x10(0, 6, sec / 10);
+		task_.dm_.draw_7x10(9, 6, sec % 10);
 	}
 
 
 
 	void ktimer::setting_()
 	{
-		const system::switch_input& swi = task_.at_switch();
+		const system::switch_input& swi = task_.swi_;
 
 		if(swi.get_level() & system::switch_input::bits::LEFT_DOWN) {
 			if(swi.get_level() & system::switch_input::bits::RIGHT_DOWN) {
@@ -87,21 +87,21 @@ namespace app {
 			down_count_ = 9 * 60 * 60 - 1;
 		}
 		if(a > down_count_) {
-			task_.at_music().request(sound::music::id::count_down, 1);
+			task_.music_.request(sound::music::id::count_down, 1);
 		} else if(a < down_count_) {
-			task_.at_music().request(sound::music::id::count_up, 1);
+			task_.music_.request(sound::music::id::count_up, 1);
 		}
 
 		if(swi.get_negative() & system::switch_input::bits::LEFT_DOWN) {
 			down_count_ = 0;
-			task_.at_music().request(sound::music::id::tetris_rot, 1);
+			task_.music_.request(sound::music::id::tetris_rot, 1);
 		}
 		if(swi.get_negative() & system::switch_input::bits::RIGHT_DOWN) {
 			if(down_count_) {
 				mode_ = mode::count;
 				sec_ = 60;
 				counter_ = down_count_;
-				task_.at_music().request(sound::music::id::start, 1);
+				task_.music_.request(sound::music::id::start, 1);
 			}
 		}
 
@@ -110,10 +110,10 @@ namespace app {
 
 	void ktimer::count_()
 	{
-		const system::switch_input& swi = task_.at_switch();
+		const system::switch_input& swi = task_.swi_;
 		if(swi.get_positive() & system::switch_input::bits::RIGHT_DOWN) {
 			pause_ = !pause_;
-			task_.at_music().request(sound::music::id::tetris_rot, 1);
+			task_.music_.request(sound::music::id::tetris_rot, 1);
 		}
 
 		if(!pause_ && counter_) {
@@ -123,7 +123,7 @@ namespace app {
 				--counter_;
 				sec_ = 60;
 				if(counter_ == 0) {
-					task_.at_music().request(sound::music::id::bgm_01, 0);
+					task_.music_.request(sound::music::id::bgm_01, 0);
 					mode_ = mode::blink;
 					sec_ = 150;
 				}
@@ -134,7 +134,7 @@ namespace app {
 		if(swi.get_level() & system::switch_input::bits::LEFT_DOWN) {
 			if(swi.get_level() & system::switch_input::bits::RIGHT_DOWN) {
 				mode_ = mode::sync_setting;
-				task_.at_music().request(sound::music::id::tetris_rot, 1);
+				task_.music_.request(sound::music::id::tetris_rot, 1);
 			}
 		}
 
@@ -145,7 +145,7 @@ namespace app {
 			int16_t w = 16 - n * 2;
 			int16_t h = 16 - n * 2;
 			if(frame_ & 1) {
-				task_.at_monograph().frame(x, y, w, h, 1);
+				task_.mng_.frame(x, y, w, h, 1);
 			}
 		}
 		++frame_;
@@ -170,7 +170,7 @@ namespace app {
 			draw_time_(down_count_);
 		}
 
-		const system::switch_input& swi = task_.at_switch();
+		const system::switch_input& swi = task_.swi_;
 		if(swi.get_positive()) {
 			mode_ = mode::setting;
 		}
@@ -205,15 +205,15 @@ namespace app {
 			blink_();
 		} else if(mode_ == mode::sync_setting) {
 			// ボタンが両方離されたら戻る
-			const system::switch_input& swi = task_.at_switch();
+			const system::switch_input& swi = task_.swi_;
 			if(!(swi.get_level() & system::switch_input::bits::LEFT_DOWN)) {
 				if(!(swi.get_level() & system::switch_input::bits::RIGHT_DOWN)) {
 					mode_ = mode::setting;
 				}
 			}
 			// Ｘの表示
-			task_.at_monograph().line(0, 0, 15, 15, 1);
-			task_.at_monograph().line(15, 0, 0, 15, 1);
+			task_.mng_.line(0, 0, 15, 15, 1);
+			task_.mng_.line(15, 0, 0, 15, 1);
 		}
 	}
 
