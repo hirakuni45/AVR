@@ -32,6 +32,7 @@ namespace app {
 		int32_t		speed_;
 		int32_t		pos_;
 
+		int8_t		page__;
 		int8_t		page_;
 
 		time_t		time_;
@@ -57,7 +58,7 @@ namespace app {
 		*/
 		//-----------------------------------------------------------------//
 		timer(task& t) : task_(t), mode_(mode::display),
-			speed_(0), pos_(0), page_(0),
+			speed_(0), pos_(0), page__(0), page_(0),
 			time_(0),
 			set_count_(0), frame_count_(0), edit_pos_(-1) { }
 

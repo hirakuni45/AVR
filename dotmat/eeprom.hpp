@@ -29,7 +29,10 @@ namespace device {
 			*/
 			//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 			enum type {
-				menu_pos,
+				menu_pos,	///< メニュー位置
+				ktm_l,		///< キッチンタイマー(L)
+				ktm_h,		///< キッチンタイマー(H)
+				timer_pos,	///< 時計、表示位置
 			};
 		};
 
@@ -68,6 +71,19 @@ namespace device {
 
 		//-----------------------------------------------------------------//
 		/*!
+			@brief	読み出し 16 ビット
+			@param[in]	t	スロットタイプ
+			@return 読み出しデータ
+		*/
+		//-----------------------------------------------------------------//
+		uint16_t read_16(slot::type t) const {
+			eeprom_busy_wait();
+			return eeprom_read_word(reinterpret_cast<const uint16_t*>(t));
+		}
+
+
+		//-----------------------------------------------------------------//
+		/*!
 			@brief	書き込み
 			@param[in]	t	スロットタイプ
 			@param[in]	data	書き込みデータ
@@ -81,6 +97,24 @@ namespace device {
 			}
 			eeprom_busy_wait();
 			eeprom_write_byte(reinterpret_cast<uint8_t*>(t), data);
+		}
+
+
+		//-----------------------------------------------------------------//
+		/*!
+			@brief	書き込み 16 ビット
+			@param[in]	t	スロットタイプ
+			@param[in]	data	書き込みデータ
+			@param[in]	even	「false」なら同値でも書き込み
+		*/
+		//-----------------------------------------------------------------//
+		void write_16(slot::type t, uint16_t data, bool even = true) const {
+			if(even) {
+				uint16_t d = read_16(t);
+				if(d == data) return ;
+			}
+			eeprom_busy_wait();
+			eeprom_write_word(reinterpret_cast<uint16_t*>(t), data);
 		}
 
 	};

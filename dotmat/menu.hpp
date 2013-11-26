@@ -20,7 +20,8 @@ namespace app {
 		int32_t	speed_;
 		int32_t	pos_;
 
-		int8_t	icon_no_;
+		int8_t	icon__;
+		int8_t	icon_;
 
 		uint8_t	kt_min_;
 
@@ -31,7 +32,8 @@ namespace app {
 			@brief	コンストラクター
 		*/
 		//-----------------------------------------------------------------//
-		menu(task& t) : task_(t), speed_(0), pos_(0), icon_no_(0), kt_min_(3),
+		menu(task& t) : task_(t), speed_(0), pos_(0), icon__(0), icon_(0),
+			kt_min_(3),
 			goto_(0) { }
 
 

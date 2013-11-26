@@ -92,7 +92,6 @@ namespace app {
 		time_ = task_.rtc_.read();
 
 		const system::switch_input& swi = task_.swi_;
-		int8_t no = page_;
 		if(swi.get_positive() & system::switch_input::bits::LEFT_UP) {
 			if(page_ < 2) {
 				++page_;
@@ -105,10 +104,16 @@ namespace app {
 				task_.music_.request(sound::music::id::tetris_move, 1);
 			}
 		}
-		if(page_ != no) {
-			if(page_ < no) speed_ = 80000;
-			else if(page_ > no) speed_ =-80000; 
+
+		if(swi.last_touch(60 * 3)) {
+			task_.eeprom_.write(device::eeprom::slot::timer_pos, page_);
 		}
+
+		if(page_ != page__) {
+			if(page_ < page__) speed_ = 80000;
+			else if(page_ > page__) speed_ =-80000; 
+		}
+		page__ = page_;
 
 		int32_t n = -page_;
 		n <<= 16;
@@ -117,7 +122,7 @@ namespace app {
 		if(n < pos_) mi = true;
 		pos_ += speed_;
 		speed_ *= 1024;
-		speed_ /= 1050;
+		speed_ /= 1030;
 		if(mi) {
 			if(n >= pos_) {
 				speed_ = 0;
@@ -379,6 +384,8 @@ namespace app {
 	//-----------------------------------------------------------------//
 	void timer::init()
 	{
+		page_ = task_.eeprom_.read(device::eeprom::slot::timer_pos);
+		if(page_ > 3 || page_ < 0) page_ = 0;		
 	}
 
 
