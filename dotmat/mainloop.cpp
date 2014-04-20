@@ -38,6 +38,14 @@
 #include "task.hpp"
 #include "twi.hpp"
 
+#include "format.hpp"
+
+struct output {
+	void operator() (char ch) {
+	}
+};
+typedef utils::format<output>	form_out;
+
 //-----------------------------------------------------------------//
 /*!
 	@brief	AVR C++ new オペレーター
@@ -192,6 +200,12 @@ int main()
 	ledout_.enable();	///< LED 表示許可
 
 	task_.start<app::menu>();	///< メニュー・タスクの登録
+
+	char fff[4];
+	fff[0] = '%';
+	fff[1] = 'd';
+	fff[2] = 0;
+	form_out(fff) % 100;
 
 	while(1) {
 		graphics::monograph& mng = task_.mng_;
