@@ -12,18 +12,8 @@
 #include <util/delay.h>
 #include <avr/sleep.h>
 #include <string.h>
-#include "format.hpp"
 
 namespace system {
-
-	class output {
-	public:
-		void operator() () {
-
-		}
-	};
-
-	utils::format<output>	format_;
 
 	//-----------------------------------------------------------------//
 	/*!
