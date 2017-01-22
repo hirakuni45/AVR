@@ -1,0 +1,11 @@
+*~
+*.[aod]
+*.map
+*.lst
+*.elf
+*.mot
+*.exe
+*.bak
+*.bck
+*.kicad_pcb-bak
+release/
