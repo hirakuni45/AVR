@@ -1,9 +1,20 @@
-#
-#	AVR data logger Makefile
-#
+#=======================================================#
+#														#
+#	AVR Makefile 				        				#
+#														#
+#=======================================================#
 TARGET		=	dotmat
 
+# DEVICE		=
+
+FATFS_VER	=	ff12a
+
+BUILD		=	release
+
+VPATH		=	../
+
 CSOURCES	=	time.c
+
 PSOURCES	=	mainloop.cpp \
 				monograph.cpp \
 				dm_draw.cpp \
@@ -14,54 +25,118 @@ PSOURCES	=	mainloop.cpp \
 				ktimer.cpp \
 				timer.cpp
 
-ASOURCES	=
+GCC_TYPE	=	avr
 
-MCU_TARGET	=	atmega328p
+USER_LIBS	=	stdc++
 
-# OPTIMIZE	= -Os -mcall-prologues
-OPTIMIZE	= -O2 -mcall-prologues
-DEFS		=	$(addprefix -I, $(INC_ROOT))
-DEFS		+=	-DF_CPU=20000000UL
-LIBS		=
+#LDSCRIPT	=	../G13/$(DEVICE).ld
+
+#USER_DEFS	=	F_CPU=20000000UL DEVICE_SIG=$(DEVICE)
+USER_DEFS	=	F_CPU=20000000UL
+
+#MCU_TARGET	=	-mmul=g13
+MCU_TARGET	=	-mmcu=atmega328p
+
+INC_SYS		=
+
+#INC_APP		=	. ../ ../G13
+
+OPTIMIZE	=	-Os
+
+CP_OPT		=	-Wall -Werror \
+				-Wno-unused-variable \
+				-Wno-exceptions \
+				-Wno-unused-function
+
+CC_OPT		=	-Wall -Werror \
+				-Wno-unused-variable \
+				-Wno-exceptions \
+				-Wno-unused-function \
+				-Wno-unused-but-set-variable
+
+SYSINCS		=	$(addprefix -I, $(INC_SYS))
+APPINCS		=	$(addprefix -I, $(INC_APP))
+AINCS		=	$(SYSINCS) $(APPINCS)
+CINCS		=	$(SYSINCS) $(APPINCS)
+PINCS		=	$(SYSINCS) $(APPINCS)
+LIBINCS		=	$(addprefix -L, $(LIB_ROOT))
+DEFS		=	$(addprefix -D, $(USER_DEFS))
+LIBS		=	$(addprefix -l, $(USER_LIBS))
 
 # You should not have to change anything below here.
+AS			=	$(GCC_TYPE)-as
+CC			=	$(GCC_TYPE)-gcc
+CP			=	$(GCC_TYPE)-g++
+AR			=	$(GCC_TYPE)-ar
+LD			=	$(GCC_TYPE)-ld
+OBJCOPY		=	$(GCC_TYPE)-objcopy
+OBJDUMP		=	$(GCC_TYPE)-objdump
+SIZE		=	$(GCC_TYPE)-size
 
-CC		= avr-gcc
-
-ASFLAGS        = -Wa,-adhlns=$(<:.S=.lst),-gstabs 
-ALL_ASFLAGS    = -mmcu=$(MCU_TARGET) -I. -x assembler-with-cpp $(ASFLAGS) $(DEFS)
+# AFLAGS        = -Wa,-adhlns=$(<:.s=.lst),-gstabs
+# AFLAGS        =	-Wa,-adhlns=$(<:.s=.lst)
+# ALL_ASFLAGS    = -x assembler-with-cpp $(ASFLAGS) $(DEFS)
+ALL_ASFLAGS    = $(AFLAGS) $(MCU_TARGET) $(DEFS)
 
 # Override is only needed by avr-lib build system.
 
-override CFLAGS		= -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS)
-override CFLAGS	   += -Wno-deprecated-declarations -D__PROG_TYPES_COMPAT__
-override PFLAGS		= -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS)
-override PFLAGS    += -Wno-deprecated-declarations -D__PROG_TYPES_COMPAT__
-override LDFLAGS	= -mmcu=$(MCU_TARGET) -Wl,-Map,$(TARGET).map
+CFLAGS		=	-std=gnu99 $(CC_OPT) $(OPTIMIZE) $(MCU_TARGET) $(DEFS)
+PFLAGS		=	-std=c++14 $(CP_OPT) $(OPTIMIZE) $(MCU_TARGET) $(DEFS)
+# override LDFLAGS	= $(MCU_TARGET) -nostartfiles -Wl,-Map,$(TARGET).map,-fdata-sections,-ffunction-sections,-falign-jumps,-fno-function-cse,-funit-at-a-time --select-lib=newlib -T $(LDSCRIPT)
+# override LDFLAGS	= $(MCU_TARGET) -nostartfiles -Wl,-Map,$(TARGET).map,--cref,--gc-sections -T $(LDSCRIPT)
 
-OBJECTS		=	$(CSOURCES:.c=.o) $(PSOURCES:.cpp=.o) $(ASOURCES:.s=.o)
+override LDFLAGS = $(MCU_TARGET) -nostartfiles -Wl,-Map,$(TARGET).map -T $(LDSCRIPT)
 
-OBJCOPY		=	avr-objcopy
-OBJDUMP		=	avr-objdump
+OBJCOPY_OPT	=	--srec-forceS3 --srec-len 32
 
-# all: $(TARGET).elf lst text eeprom
-all: $(TARGET).elf lst text
+OBJECTS	=	$(addprefix $(BUILD)/,$(patsubst %.s,%.o,$(ASOURCES))) \
+			$(addprefix $(BUILD)/,$(patsubst %.c,%.o,$(CSOURCES))) \
+			$(addprefix $(BUILD)/,$(patsubst %.cpp,%.o,$(PSOURCES)))
 
-$(TARGET).elf: $(OBJECTS) Makefile
-	$(CC) $(LDFLAGS) -o $@ $(OBJECTS) $(LIBS)
+DOBJECTS =	$(addprefix $(BUILD)/,$(patsubst %.c,%.o,$(CSOURCES))) \
+			$(addprefix $(BUILD)/,$(patsubst %.cpp,%.o,$(PSOURCES)))
 
-%.o: %.c
-	$(CC) -c $(CFLAGS) $< -o $@
+DEPENDS =   $(patsubst %.o,%.d, $(DOBJECTS))
 
-%.o: %.cpp
-	$(CC) -c $(PFLAGS) $< -o $@
+.PHONY: all clean
+.SUFFIXES :
+.SUFFIXES : .rc .hpp .s .h .c .cpp .d .o
 
-%.o: %.s
-	$(CC) -c $(ALL_ASFLAGS) $< -o $@
+all: $(BUILD) $(TARGET).elf text
+
+$(TARGET).elf: $(OBJECTS) $(LDSCRIPT) Makefile
+	$(CC) $(LDFLAGS) $(LIBINCS) -o $@ $(OBJECTS) $(LIBS)
+	$(SIZE) $@
+
+$(BUILD)/%.o: %.s
+	mkdir -p $(dir $@); \
+	$(AS) -c $(AOPT) $(AFLAGS) $(AINCS) -o $@ $<
+
+$(BUILD)/%.o : %.c
+	mkdir -p $(dir $@); \
+	$(CC) -c $(COPT) $(CFLAGS) $(CINCS) $(CCWARN) -o $@ $<
+
+$(BUILD)/%.o : %.cpp
+	mkdir -p $(dir $@); \
+	$(CP) -c $(POPT) $(PFLAGS) $(PINCS) $(CPWARN) -o $@ $<
+
+$(BUILD)/%.d: %.c
+	mkdir -p $(dir $@); \
+	$(CC) -MM -DDEPEND_ESCAPE $(COPT) $(CFLAGS) $(APPINCS) $< \
+	| sed 's/$(notdir $*)\.o:/$(subst /,\/,$(patsubst %.d,%.o,$@) $@):/' > $@ ; \
+	[ -s $@ ] || rm -f $@
+
+$(BUILD)/%.d: %.cpp
+	mkdir -p $(dir $@); \
+	$(CP) -MM -DDEPEND_ESCAPE $(POPT) $(PFLAGS) $(APPINCS) $< \
+	| sed 's/$(notdir $*)\.o:/$(subst /,\/,$(patsubst %.d,%.o,$@) $@):/' > $@ ; \
+	[ -s $@ ] || rm -f $@
 
 clean:
-	rm -rf *.o $(TARGET).elf *.eps *.png *.pdf *.bak 
-	rm -rf *.lst *.map $(EXTRA_CLEAN_FILES)
+	rm -rf $(BUILD) $(TARGET).elf $(TARGET).mot $(TARGET).lst $(TARGET).map
+
+clean_depend:
+	rm -f $(DEPENDS)
 
 lst:  $(TARGET).lst
 
@@ -70,166 +145,35 @@ lst:  $(TARGET).lst
 
 # Rules for building the .text rom images
 
-text: hex bin
+text: mot lst
 
-hex:  $(TARGET).hex
-bin:  $(TARGET).bin
-#srec: $(TARGET).srec
+bin: $(TARGET).bin
+mot: $(TARGET).mot
+lst: $(TARGET).lst
 
-%.hex: %.elf
-	$(OBJCOPY) -j .text -j .data -O ihex $< $@
+%.lst: %.elf
+	$(OBJDUMP) -h -S $< > $@
 
-%.srec: %.elf
-	$(OBJCOPY) -j .text -j .data -O srec $< $@
+%.mot: %.elf
+	$(OBJCOPY) $(OBJCOPY_OPT) -O srec $< $@
 
 %.bin: %.elf
-	$(OBJCOPY) -j .text -j .data -O binary $< $@
-
-# Rules for building the .eeprom rom images
-
-eeprom: ehex ebin
-
-ehex:  $(TARGET)_eeprom.hex
-ebin:  $(TARGET)_eeprom.bin
-
-%_eeprom.hex: %.elf
-	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O ihex $< $@ \
-	|| { echo empty $@ not generated; exit 0; }
-
-%_eeprom.bin: %.elf
-	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O binary $< $@ \
-	|| { echo empty $@ not generated; exit 0; }
-
-# Every thing below here is used by avr-libc's build system and can be ignored
-# by the casual user.
-
-FIG2DEV                 = fig2dev
-EXTRA_CLEAN_FILES       = *.hex *.bin
-
-dox: eps png pdf
-
-eps: $(TARGET).eps
-png: $(TARGET).png
-pdf: $(TARGET).pdf
-
-%.eps: %.fig
-	$(FIG2DEV) -L eps $< $@
-
-%.pdf: %.fig
-	$(FIG2DEV) -L pdf $< $@
-
-%.png: %.fig
-	$(FIG2DEV) -L png $< $@
-
-read_fuse:
-	hidspx -ph -d4 -Rf
-
-# low を先に書く
-write_fuse_low:
-	hidspx -ph -d4 -FL11100110
-
-write_fuse_high:
-	hidspx -ph -d4 -FH11010100
-
-ram_size:
-	grep heap_start $(TARGET).map
-
-run:
-	hidspx -ph -d4 $(TARGET).hex
-#	avrsp -pb3 $(TARGET).hex
-#	avrsp -pb3 -d40 $(TARGET).hex
-
-create_bitmap:
-	bmc -text -offset  0*8,0 -size 3,5 images/matrix_font.png font3x5.h
-	bmc -text -offset  1*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
-	bmc -text -offset  2*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
-	bmc -text -offset  3*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
-	bmc -text -offset  4*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
-	bmc -text -offset  5*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
-	bmc -text -offset  6*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
-	bmc -text -offset  7*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
-	bmc -text -offset  8*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
-	bmc -text -offset  9*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
-	bmc -text -offset 10*8,0 -size 3,5 images/matrix_font.png -append font3x5.h
-
-	bmc -text -offset  0*8,3*8 -size 4,5 images/matrix_font.png font4x5.h
-	bmc -text -offset  1*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  2*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  3*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  4*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  5*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  6*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  7*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  8*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  9*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset 10*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset 11*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset 14*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset 15*8,3*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  0*8,4*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  1*8,4*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  2*8,4*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  4*8,4*8 -size 4,5 images/matrix_font.png -append font4x5.h
-	bmc -text -offset  9*8,4*8 -size 4,5 images/matrix_font.png -append font4x5.h
-
-	bmc -text -offset 12*8,3*8 -size 5,5 images/matrix_font.png font5x5.h
-	bmc -text -offset 13*8,3*8 -size 5,5 images/matrix_font.png -append font5x5.h
-	bmc -text -offset  3*8,4*8 -size 5,5 images/matrix_font.png -append font5x5.h
-	bmc -text -offset  5*8,4*8 -size 5,5 images/matrix_font.png -append font5x5.h
-	bmc -text -offset  6*8,4*8 -size 5,5 images/matrix_font.png -append font5x5.h
-	bmc -text -offset  7*8,4*8 -size 5,5 images/matrix_font.png -append font5x5.h
-	bmc -text -offset  8*8,4*8 -size 5,5 images/matrix_font.png -append font5x5.h
-
-	bmc -text -offset  0*8,8 -size 7,10 images/matrix_font.png font7x10.h
-	bmc -text -offset  1*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-	bmc -text -offset  2*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-	bmc -text -offset  3*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-	bmc -text -offset  4*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-	bmc -text -offset  5*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-	bmc -text -offset  6*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-	bmc -text -offset  7*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-	bmc -text -offset  8*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-	bmc -text -offset  9*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-	bmc -text -offset 10*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-	bmc -text -offset 11*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-	bmc -text -offset 12*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-	bmc -text -offset 13*8,8 -size 7,10 images/matrix_font.png -append font7x10.h
-
-	bmc -text -offset  0*16,48 -size 16,16 images/matrix_font.png icon.h
-	bmc -text -offset  1*16,48 -size 16,16 images/matrix_font.png -append icon.h
-	bmc -text -offset  2*16,48 -size 16,16 images/matrix_font.png -append icon.h
-
-depend:
-	makedepend -Y -- $(CFLAGS) $(INC_A) -- $(ASOURCES) $(CSOURCES) $(PSOURCES)
+	$(OBJCOPY) -O binary $< $@
+#	$(OBJCOPY) -j .vects -j .text -j .data -O binary $< $@
 
 tarball:
-	chmod -x *.[hc] *.[hc]pp
-	chmod -x Makefile
-	chmod -x KiCAD/*
-	rm -f $(TARGET)_src.tgz
-	tar cfvz $(TARGET)_src.tgz *.[hc] *.[hc]pp KiCAD
-	chmod 444 $(TARGET)_src.tgz
+	tar cfvz $(subst .elf,,$(TARGET))_$(shell date +%Y%m%d%H).tgz \
+	*.[hc]pp Makefile ../common/*/*.[hc]pp ../common/*/*.[hc]
 
-# DO NOT DELETE
+bin_zip:
+	$(LK) $(LFLAGS) $(LIBS) $(OBJECTS) $(ICON_OBJ) $(LIBN) -mwindows -o $(TARGET) 
+	rm -f $(subst .exe,,$(TARGET))_$(shell date +%Y%m%d%H)_bin.zip
+	zip $(subst .exe,,$(TARGET))_$(shell date +%Y%m%d%H)_bin.zip *.exe *.dll res/*.*
 
-time.o: time.h
-mainloop.o: mainloop.hpp ledout.hpp monograph.hpp switch.hpp psound.hpp
-mainloop.o: menu.hpp task.hpp i_task.hpp dm_draw.hpp music.hpp ds1370_io.hpp
-mainloop.o: twi.hpp time.h eeprom.hpp
-monograph.o: monograph.hpp
-dm_draw.o: dm_draw.hpp monograph.hpp font3x5.h font4x5.h font5x5.h font7x10.h
-dm_draw.o: icon.h
-psound.o: psound.hpp
-music.o: music.hpp psound.hpp
-menu.o: menu.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-menu.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h eeprom.hpp
-menu.o: ktimer.hpp tetris.hpp timer.hpp
-tetris.o: tetris.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-tetris.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h eeprom.hpp
-tetris.o: menu.hpp
-ktimer.o: ktimer.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-ktimer.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h eeprom.hpp
-ktimer.o: menu.hpp
-timer.o: timer.hpp task.hpp switch.hpp monograph.hpp psound.hpp i_task.hpp
-timer.o: dm_draw.hpp music.hpp ds1370_io.hpp twi.hpp time.h eeprom.hpp
-timer.o: menu.hpp
+run:
+	r78prog -P COM11 -e -w -v $(TARGET).mot
+
+verify:
+	r78prog -P COM11 -v $(TARGET).mot
+
+-include $(DEPENDS)
